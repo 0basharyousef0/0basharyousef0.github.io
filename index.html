@@ -78,6 +78,20 @@ section { padding-block: 72px 0; }
 h2 { font: 700 28px/1.2 var(--head); margin: 0 0 28px; display: flex; align-items: baseline; gap: 12px; }
 h2::before { content: attr(data-cmd); font: 400 14px var(--mono); color: var(--green-dim); }
 
+/* education + certificates */
+.edu { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; }
+@media (max-width: 720px) { .edu { grid-template-columns: minmax(0, 1fr); } }
+.school h3 { margin: 0; font: 700 22px/1.25 var(--head); }
+.school .deg { margin: 6px 0 0; }
+.school .when { font-family: var(--mono); font-size: 13px; color: var(--green-dim); margin-top: 4px; }
+.courses { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.course { font-family: var(--mono); font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); background: var(--surface); }
+.certs { list-style: none; margin: 0; padding: 0; }
+.certs li { padding: 12px 0; border-top: 1px solid var(--line); }
+.certs li:last-child { border-bottom: 1px solid var(--line); }
+.certs b { display: block; font-weight: 600; }
+.certs span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
 /* projects */
 .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 720px) { .projects { grid-template-columns: minmax(0, 1fr); } }
@@ -157,6 +171,7 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
   <div class="top-in">
     <a class="logo" href="#top"><b>bashar</b>@yousef:~$</a>
     <nav aria-label="Sections">
+      <a href="#education">education</a>
       <a href="#projects">projects</a>
       <a href="#experience">experience</a>
       <a href="#leadership">leadership</a>
@@ -178,18 +193,26 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
     </div>
   </section>
 
+  <section id="education">
+    <h2 data-cmd="01 //">Education &amp; certificates</h2>
+    <div class="edu">
+      <div class="school" id="school"></div>
+      <div><p class="sub">Certificates</p><ul class="certs" id="certList"></ul></div>
+    </div>
+  </section>
+
   <section id="projects">
-    <h2 data-cmd="01 //">Projects</h2>
+    <h2 data-cmd="02 //">Projects</h2>
     <div class="projects" id="projectList"></div>
   </section>
 
   <section id="experience">
-    <h2 data-cmd="02 //">Experience</h2>
+    <h2 data-cmd="03 //">Experience</h2>
     <div id="expList"></div>
   </section>
 
   <section id="leadership">
-    <h2 data-cmd="03 //">Leadership &amp; volunteering</h2>
+    <h2 data-cmd="04 //">Leadership &amp; volunteering</h2>
     <div class="two">
       <div><p class="sub">Leadership</p><div id="leadList"></div></div>
       <div><p class="sub">Volunteering</p><div id="volList"></div></div>
@@ -197,12 +220,12 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
   </section>
 
   <section id="interests">
-    <h2 data-cmd="04 //">Interests</h2>
+    <h2 data-cmd="05 //">Interests</h2>
     <div class="chips" id="chipList"></div>
   </section>
 
   <section id="terminal">
-    <h2 data-cmd="05 //">Terminal</h2>
+    <h2 data-cmd="06 //">Terminal</h2>
     <p class="hint">Prefer the command line? Try <button type="button">help</button><button type="button">whoami</button><button type="button">projects</button></p>
     <div class="term">
       <div class="term-bar"><i></i><i></i><i></i><span>guest@bashar ~</span></div>
@@ -215,7 +238,7 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
   </section>
 
   <section id="contact">
-    <h2 data-cmd="06 //">Contact</h2>
+    <h2 data-cmd="07 //">Contact</h2>
     <div class="contact" id="contactList"></div>
   </section>
 </main>
@@ -233,6 +256,21 @@ const DATA = {
     "Building ClubOS for university clubs.",
     "Flutter · Supabase · PostgreSQL.",
     "Turning group-chat chaos into software."
+  ],
+  education: {
+    school: "Western University",
+    degree: "B.Sc. Computer Science, Minor in Data Science",
+    program: "Science Co-op Program",
+    when: "Sep. 2023 – Dec. 2027 (expected)",
+    courses: [
+      "Databases I & II", "Machine Learning", "Data Structures & Algorithms", "Software Engineering",
+      "Object Oriented Design & Analysis", "Systems Programming", "Operating Systems", "Web Development",
+      "IBM Mainframe", "Linear Algebra", "Calculus I", "Discrete Math", "Applied Logic for CS", "Statistics", "Data Science"
+    ]
+  },
+  certificates: [
+    { name: "Introduction to Software Engineering", issuer: "IBM · Coursera" },
+    { name: "Git and GitHub", issuer: "IBM · Coursera" }
   ],
   projects: [
     {
@@ -319,6 +357,13 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sample = x => x.sample ? '<span class="sample">SAMPLE</span>' : "";
 
+const ed = DATA.education;
+$("#school").innerHTML = `<h3>${esc(ed.school)}</h3><p class="deg">${esc(ed.degree)} · ${esc(ed.program)}</p>
+  <div class="when">${esc(ed.when)}</div>
+  <p class="sub" style="margin-top:22px">Relevant courses</p>
+  <div class="courses">${ed.courses.map(c => `<span class="course">${esc(c)}</span>`).join("")}</div>`;
+$("#certList").innerHTML = DATA.certificates.map(c => `<li><b>${esc(c.name)}</b><span>${esc(c.issuer)}</span></li>`).join("");
+
 $("#projectList").innerHTML = DATA.projects.map(p => `
   <article class="card ${p.featured ? "featured" : ""}">
     ${sample(p)}
@@ -395,6 +440,7 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   const CMDS = {
     help: () => `<span class="g">commands</span>
   whoami      about me
+  education   school, courses and certificates
   projects    list projects
   experience  list experience
   interests   what I'm into
@@ -402,6 +448,11 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   goto &lt;x&gt;    jump to a section
   clear       clear the screen`,
     whoami: () => "Bashar Yousef. Student developer at Western University, building ClubOS.",
+    education: () => `<span class="g">${esc(ed.school)}</span> · ${esc(ed.degree)}
+<span class="m">${esc(ed.when)}</span>
+courses: ${ed.courses.map(esc).join(", ")}
+certificates:
+${DATA.certificates.map(c => `  <span class="g">›</span> ${esc(c.name)} <span class="m">(${esc(c.issuer)})</span>`).join("\n")}`,
     projects: () => DATA.projects.map(p => `<span class="g">›</span> ${esc(p.title)} <span class="m">· ${esc(p.meta)}</span>`).join("\n"),
     experience: () => DATA.experience.map(e => `<span class="g">${esc(e.when)}</span>  ${esc(e.role)} · ${esc(e.org)}`).join("\n"),
     interests: () => DATA.interests.map(esc).join(" · "),
