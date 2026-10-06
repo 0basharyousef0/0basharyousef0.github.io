@@ -97,7 +97,7 @@ h2::before { content: attr(data-cmd); font: 400 14px var(--mono); color: var(--g
 .sample { align-self: flex-start; font-family: var(--mono); font-size: 11px; color: var(--bg); background: #ffc94d; padding: 0 6px; }
 
 /* experience */
-.job { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; padding: 20px 0; border-top: 1px solid var(--line); }
+.job { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 24px; padding: 20px 0; border-top: 1px solid var(--line); }
 .job:last-child { border-bottom: 1px solid var(--line); }
 @media (max-width: 600px) { .job { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
 .job .when { font-family: var(--mono); font-size: 13px; color: var(--green-dim); padding-top: 3px; }
@@ -114,6 +114,7 @@ h2::before { content: attr(data-cmd); font: 400 14px var(--mono); color: var(--g
 .item { padding: 16px 0; border-top: 1px solid var(--line); }
 .item h3 { margin: 0; font-size: 17px; font-weight: 600; }
 .item .org { color: var(--muted); font-size: 14px; }
+.item .org span { font-family: var(--mono); font-size: 12px; color: var(--green-dim); margin-left: 6px; }
 .item p { margin: 6px 0 0; font-size: 15px; }
 .item .sample { display: inline-block; margin-bottom: 6px; }
 
@@ -248,23 +249,7 @@ const DATA = {
         "Yearly term reset and presidency transfer for club turnover"
       ],
       tags: ["Flutter", "Dart", "Supabase", "PostgreSQL", "Riverpod", "Firebase"],
-      link: { label: "GitHub →", href: "https://github.com/0basharyousef0" }
-    },
-    {
-      sample: true,
-      title: "Project two",
-      meta: "2025",
-      summary: "One sentence on what it does and who it helps.",
-      points: ["What you built", "A result with a number in it"],
-      tags: ["Python", "React"]
-    },
-    {
-      sample: true,
-      title: "Project three",
-      meta: "Hackathon · 2025",
-      summary: "One sentence on what it does and who it helps.",
-      points: ["What you built", "Your role on the team"],
-      tags: ["TypeScript"]
+      link: { label: "View on GitHub →", href: "https://github.com/0basharyousef0/ClubOS" }
     }
   ],
   experience: [
@@ -277,20 +262,64 @@ const DATA = {
         "Wrote the database security rules that keep each club's data private"
       ]
     },
-    { sample: true, when: "Summer 2025", role: "Your role", org: "Company", points: ["What you owned", "What changed because of your work"] },
+    {
+      when: "Nov. 2025 – Feb. 2026",
+      role: "AI Training Contributor",
+      org: "Outlier",
+      points: [
+        "Wrote and refined roughly 60 structured prompts to improve large language model accuracy, consistency and instruction following",
+        "Evaluated about 85 AI-generated responses per week for logic and guideline compliance, diagnosing recurring defects across 4 review cycles and applying prompt fixes that cut repeat errors"
+      ]
+    },
+    {
+      when: "Jul. 2025 – Aug. 2025",
+      role: "Client Facing Intern",
+      org: "Deloitte",
+      points: [
+        "Validated client financial records across invoices, expense reports and spreadsheets, flagging discrepancies to senior team members under engagement deadlines"
+      ]
+    },
     { when: "2024 – Now", role: "Student", org: "Western University", points: ["Program and year go here"] }
   ],
   leadership: [
-    { sample: true, title: "Club position", org: "Club name", text: "What you led and one outcome you're proud of." }
+    {
+      title: "Vice President of Finance",
+      org: "Western Cyber Society",
+      when: "Sep. 2025 – Present",
+      text: "Manage a $12K term budget across FAANG Day, IBM Night and the Canadian Tech Summit while overseeing a team of directors. Secured over $5K in grants and sponsorships, and lead sponsor outreach to companies including Amazon, IBM and Google."
+    },
+    {
+      title: "Finance Director",
+      org: "Western Cyber Society",
+      text: "Director on the finance team before being promoted to Vice President of Finance."
+    },
+    {
+      title: "Vice President of Finance",
+      org: "Jordanian Cultural Club",
+      when: "2026 – 27",
+      text: "Oversee the club's finance directors."
+    },
+    {
+      title: "Vice President of Events",
+      org: "Jordanian Cultural Club",
+      when: "2025 – 26",
+      text: "Ran 4+ events per semester for 50 to 150 attendees."
+    }
   ],
   volunteering: [
-    { sample: true, title: "Volunteer role", org: "Organization", text: "Who you helped and what you did." }
+    {
+      title: "Teaching Assistant",
+      org: "Code Ninjas",
+      when: "Oct. 2022 – Jan. 2023",
+      text: "Mentored 18 students in Python and Scratch, leading small-group sessions on debugging and problem solving."
+    }
   ],
   interests: ["Mobile development", "Databases", "Cybersecurity", "Product design", "AI tools", "Student leadership", "Gaming"],
   contact: [
-    { k: "Email", v: "you@example.com", copy: true },
+    { k: "Email", v: "basharkyousef2@gmail.com", copy: true },
+    { k: "LinkedIn", v: "linkedin.com/in/bashar-khaled-yousef", href: "https://www.linkedin.com/in/bashar-khaled-yousef/" },
     { k: "GitHub", v: "github.com/0basharyousef0", href: "https://github.com/0basharyousef0" },
-    { k: "LinkedIn", v: "linkedin.com/in/your-handle", href: "https://www.linkedin.com/" }
+    { k: "Location", v: "London, Ontario" }
   ]
 };
 
@@ -318,7 +347,7 @@ $("#expList").innerHTML = DATA.experience.map(e => `
     <ul>${e.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
   </div>`).join("");
 
-const items = list => list.map(i => `<div class="item">${sample(i)}<h3>${esc(i.title)}</h3><div class="org">${esc(i.org)}</div><p>${esc(i.text)}</p></div>`).join("");
+const items = list => list.map(i => `<div class="item">${sample(i)}<h3>${esc(i.title)}</h3><div class="org">${esc(i.org)}${i.when ? `<span>${esc(i.when)}</span>` : ""}</div><p>${esc(i.text)}</p></div>`).join("");
 $("#leadList").innerHTML = items(DATA.leadership);
 $("#volList").innerHTML = items(DATA.volunteering);
 $("#chipList").innerHTML = DATA.interests.map(i => `<span class="chip">${esc(i)}</span>`).join("");
