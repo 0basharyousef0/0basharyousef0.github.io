@@ -3,1082 +3,410 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Bashar Yousef — student developer at Western University. Gamified portfolio.">
+<meta name="description" content="Bashar Yousef, student developer at Western University.">
 <title>BasharOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: a game HUD over a scrolling "world map" — each section is a level you clear for XP. Deliberately single dark theme. */
+/* Layout: one calm reading column; terminal-green used only for accents, links and the interactive shell. Single dark theme by choice. */
 :root {
-  --void: #030805;
-  --panel: #07120b;
-  --panel-2: #0b1a10;
-  --line: #15392180;
-  --line-strong: #1f6b3a;
-  --green: #39ff7a;
-  --green-dim: #1fa652;
-  --green-ghost: #39ff7a1f;
-  --text: #c9f5d6;
-  --muted: #6f9d7c;
-  --amber: #ffc94d;
-  --red: #ff5a6a;
-  --display: "VT323", ui-monospace, monospace;
+  --bg: #050a07;
+  --surface: #0a140e;
+  --line: #173022;
+  --green: #3dfc84;
+  --green-dim: #22a55a;
+  --text: #d6eedd;
+  --muted: #7d9d88;
   --head: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --hud-h: 56px;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { scroll-behavior: smooth; scroll-padding-top: calc(var(--hud-h) + 16px); }
-html, body { margin: 0; }
-body {
-  background: var(--void);
-  color: var(--text);
-  font: 15px/1.65 var(--mono);
-  overflow-x: hidden;
-}
-::selection { background: var(--green); color: var(--void); }
-a { color: var(--green); }
-button { font: inherit; color: inherit; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--body); }
+::selection { background: var(--green); color: var(--bg); }
+a { color: var(--green); text-decoration: none; }
+a:hover { text-decoration: underline; }
 :focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
 
-/* ---------- ambient layers ---------- */
-#rain { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: .16; pointer-events: none; }
-.scan { position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: repeating-linear-gradient(to bottom, transparent 0 2px, #00000038 2px 3px);
-  mix-blend-mode: multiply; }
-.vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 55%, #000000b0 100%); }
-body.burst #rain { opacity: .6; transition: opacity .3s; }
+/* header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: #050a07e8; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 960px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 24px; }
+.logo { font-family: var(--mono); font-size: 15px; color: var(--text); }
+.logo b { color: var(--green); font-weight: 500; }
+.top nav { margin-left: auto; display: flex; gap: 22px; font-family: var(--mono); font-size: 13px; }
+.top nav a { color: var(--muted); }
+.top nav a:hover { color: var(--green); text-decoration: none; }
+@media (max-width: 720px) { .top nav { display: none; } }
 
-/* ---------- HUD ---------- */
-.hud {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-  padding-top: env(safe-area-inset-top, 0px);
-  background: #030805e6; backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--line-strong);
-}
-.hud-in { height: var(--hud-h); max-width: 1180px; margin: 0 auto; padding-inline: 16px;
-  display: flex; align-items: center; gap: 18px; }
-.handle { font-family: var(--display); font-size: 26px; color: var(--green); letter-spacing: .04em; white-space: nowrap; text-decoration: none; }
-.handle span { color: var(--muted); }
-.lvl { font-family: var(--display); font-size: 22px; white-space: nowrap; }
-.lvl b { color: var(--amber); font-weight: 400; }
-.xpbar { flex: 1; min-width: 80px; max-width: 340px; display: grid; gap: 2px; }
-.xpbar .track { height: 8px; border: 1px solid var(--line-strong); background: var(--panel); position: relative; overflow: hidden; }
-.xpbar .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--green-dim), var(--green)); box-shadow: 0 0 10px var(--green); transition: width .6s cubic-bezier(.2,.8,.2,1); }
-.xpbar small { font-size: 11px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
-.nav { display: flex; gap: 4px; margin-left: auto; }
-.nav a { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; text-decoration: none; color: var(--muted); padding: 6px 8px; border: 1px solid transparent; position: relative; }
-.nav a:hover { color: var(--green); border-color: var(--line-strong); }
-.nav a.cleared { color: var(--text); }
-.nav a.cleared::after { content: ""; position: absolute; top: 3px; right: 2px; width: 5px; height: 5px; background: var(--green); box-shadow: 0 0 6px var(--green); }
-.trophy-btn { background: var(--panel); border: 1px solid var(--line-strong); padding: 6px 10px; cursor: pointer; font-family: var(--display); font-size: 20px; color: var(--amber); white-space: nowrap; }
-.trophy-btn:hover { border-color: var(--amber); }
-@media (max-width: 920px) { .nav { display: none; } .xpbar { max-width: none; } }
-@media (max-width: 480px) { .lvl { display: none; } .handle { font-size: 22px; } }
+main { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 0 64px; }
+section { padding-block: 72px 0; }
 
-/* ---------- layout ---------- */
-main { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: calc(var(--hud-h) + 40px) 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 110px; }
-section { position: relative; }
-.sec-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; border-bottom: 1px dashed var(--line-strong); padding-bottom: 12px; }
-.sec-head .lv { font-family: var(--display); font-size: 22px; color: var(--green-dim); letter-spacing: .08em; }
-.sec-head h2 { font: 700 clamp(28px, 4.4vw, 44px)/1.05 var(--head); margin: 0; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
-.sec-head .status { margin-left: auto; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.sec-head .status.ok { color: var(--green); }
-.sec-head p { flex-basis: 100%; margin: 0; color: var(--muted); max-width: 62ch; }
-
-/* ---------- hero ---------- */
-.hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 40px; align-items: center; }
-@media (max-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr); } }
-.hero > * { min-width: 0; }
-.eyebrow { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--green-dim); display: flex; align-items: center; gap: 10px; }
-.eyebrow::before { content: ""; width: 8px; height: 8px; background: var(--green); box-shadow: 0 0 10px var(--green); animation: blink 1.2s steps(2) infinite; }
-@keyframes blink { 50% { opacity: 0; } }
-.name { overflow-wrap: anywhere; font: 700 clamp(46px, 10vw, 118px)/.9 var(--head); margin: 18px 0 14px; text-transform: uppercase; letter-spacing: -.01em; position: relative; color: var(--text); }
-.name .g { color: var(--green); text-shadow: 0 0 22px #39ff7a66; }
+/* hero */
+.hero { padding-block: 96px 32px; position: relative; }
+.hero::before { content: ""; position: absolute; inset: 0 -16px; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px; opacity: .45;
+  mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 70%); }
+.prompt { font-family: var(--mono); font-size: 14px; color: var(--green-dim); }
+.hero h1 { font: 700 clamp(48px, 9vw, 92px)/1 var(--head); margin: 14px 0 18px; letter-spacing: -.01em; }
+.hero h1 .last { color: var(--green); }
 .glitch { position: relative; display: inline-block; }
+.glitch.last::before { color: var(--text); }
 .glitch::before, .glitch::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; opacity: 0; }
-.glitch.on::before { opacity: .8; color: var(--green); transform: translate(-3px, 1px); clip-path: inset(10% 0 55% 0); }
-.glitch.on::after { opacity: .8; color: var(--red); transform: translate(3px, -1px); clip-path: inset(60% 0 8% 0); }
-.typed { font-size: clamp(16px, 2.2vw, 20px); min-height: 1.7em; color: var(--text); }
-.typed .caret { display: inline-block; width: .6em; height: 1.05em; background: var(--green); vertical-align: -3px; animation: blink 1s steps(2) infinite; margin-left: 2px; }
-.lede { color: var(--muted); max-width: 54ch; margin: 14px 0 26px; }
+.glitch.on { animation: jitter .35s steps(2) both; }
+.glitch::before { color: var(--green); }
+.glitch.on::before { opacity: .85; animation: sliceA .35s steps(3) both; }
+.glitch.on::after { opacity: .85; color: #ff4d6d; animation: sliceB .35s steps(3) both; }
+@keyframes jitter { 0% { transform: translate(0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } 100% { transform: translate(0); } }
+@keyframes sliceA { 0% { clip-path: inset(10% 0 60% 0); transform: translate(-4px, 0); } 50% { clip-path: inset(55% 0 20% 0); transform: translate(3px, 0); } 100% { clip-path: inset(30% 0 45% 0); transform: translate(-2px, 0); } }
+@keyframes sliceB { 0% { clip-path: inset(65% 0 5% 0); transform: translate(4px, 0); } 50% { clip-path: inset(15% 0 70% 0); transform: translate(-3px, 0); } 100% { clip-path: inset(40% 0 30% 0); transform: translate(2px, 0); } }
+.typed { font-family: var(--mono); font-size: clamp(15px, 2vw, 18px); min-height: 1.7em; color: var(--text); }
+.caret { display: inline-block; width: .55em; height: 1.1em; background: var(--green); vertical-align: -3px; margin-left: 2px; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.bio { color: var(--muted); max-width: 58ch; margin: 18px 0 30px; font-size: 17px; }
 .cta { display: flex; gap: 12px; flex-wrap: wrap; }
-.btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border: 1px solid var(--green); background: var(--green-ghost); color: var(--green); text-decoration: none; text-transform: uppercase; letter-spacing: .14em; font-size: 13px; font-weight: 600; cursor: pointer; position: relative; overflow: hidden; transition: color .2s, background .2s, box-shadow .2s; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px)); }
-.btn:hover { background: var(--green); color: var(--void); box-shadow: 0 0 24px #39ff7a80; }
-.btn.ghost { border-color: var(--line-strong); background: transparent; color: var(--text); }
-.btn.ghost:hover { border-color: var(--green); background: var(--green-ghost); color: var(--green); box-shadow: none; }
-.btn kbd { font: inherit; opacity: .6; }
+.btn { font-family: var(--mono); font-size: 14px; padding: 11px 18px; border: 1px solid var(--green); color: var(--green); transition: background .2s, color .2s; }
+.btn:hover { background: var(--green); color: var(--bg); text-decoration: none; }
+.btn.alt { border-color: var(--line); color: var(--text); }
+.btn.alt:hover { border-color: var(--green); background: transparent; color: var(--green); }
 
-/* character sheet */
-.sheet { border: 1px solid var(--line-strong); background: linear-gradient(180deg, var(--panel-2), var(--panel)); padding: 20px; position: relative; }
-.sheet::before, .sheet::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--green); }
-.sheet::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
-.sheet::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
-.sheet-top { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
-.avatar { width: 76px; height: 76px; flex: none; border: 1px solid var(--green-dim); image-rendering: pixelated; background: var(--void); }
-.sheet h3 { margin: 0; font: 700 20px/1.2 var(--head); text-transform: uppercase; }
-.sheet .cls { color: var(--muted); font-size: 13px; }
-.stats { display: grid; gap: 10px; }
-.stat { display: grid; grid-template-columns: 98px 1fr 34px; gap: 10px; align-items: center; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
-.stat .bar { height: 6px; background: #0f2a18; position: relative; overflow: hidden; }
-.stat .bar i { position: absolute; inset: 0 auto 0 0; background: var(--green); width: 0; transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
-.stat output { font-family: var(--display); font-size: 20px; color: var(--green); text-align: right; font-variant-numeric: tabular-nums; }
-.sheet-foot { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line-strong); display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); gap: 12px; flex-wrap: wrap; }
-.sheet-foot b { color: var(--green); font-weight: 500; }
+/* section heads */
+h2 { font: 700 28px/1.2 var(--head); margin: 0 0 28px; display: flex; align-items: baseline; gap: 12px; }
+h2::before { content: attr(data-cmd); font: 400 14px var(--mono); color: var(--green-dim); }
 
-/* quest tracker */
-.quests { margin-top: 34px; display: flex; gap: 10px; flex-wrap: wrap; }
-.quest { font-size: 12px; padding: 6px 10px; border: 1px dashed var(--line-strong); color: var(--muted); display: flex; gap: 8px; align-items: center; }
-.quest::before { content: "[ ]"; color: var(--green-dim); }
-.quest.done { color: var(--text); border-style: solid; border-color: var(--green-dim); }
-.quest.done::before { content: "[x]"; color: var(--green); }
+/* projects */
+.projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .projects { grid-template-columns: minmax(0, 1fr); } }
+.card { border: 1px solid var(--line); background: var(--surface); padding: 22px; display: flex; flex-direction: column; gap: 10px; transition: border-color .2s, transform .2s; }
+.card:hover { border-color: var(--green-dim); transform: translateY(-2px); }
+.card.featured { grid-column: 1 / -1; }
+.card .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.card h3 { font: 700 22px/1.2 var(--head); margin: 0; }
+.card p { margin: 0; }
+.card ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 15px; display: grid; gap: 4px; }
+.card.featured ul { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+@media (max-width: 720px) { .card.featured ul { grid-template-columns: minmax(0, 1fr); } }
+.card li::marker { color: var(--green); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 6px; }
+.tag { font-family: var(--mono); font-size: 12px; color: var(--green); border: 1px solid var(--line); padding: 1px 8px; }
+.card .link { font-family: var(--mono); font-size: 13px; }
+.sample { align-self: flex-start; font-family: var(--mono); font-size: 11px; color: var(--bg); background: #ffc94d; padding: 0 6px; }
 
-/* ---------- project cards ---------- */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 18px; }
-.card { border: 1px solid var(--line-strong); background: var(--panel); padding: 20px; position: relative; display: flex; flex-direction: column; gap: 12px; transition: border-color .25s, transform .25s, box-shadow .25s; min-width: 0; }
-.card:hover { border-color: var(--green-dim); transform: translateY(-3px); box-shadow: 0 10px 30px #00000080, 0 0 0 1px #39ff7a22; }
-.card .meta { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.card .rank { color: var(--amber); }
-.card h3 { margin: 0; font: 700 24px/1.15 var(--head); text-transform: uppercase; }
-.card .sum { margin: 0; color: var(--text); }
-.tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.tag { font-size: 11px; padding: 2px 8px; border: 1px solid var(--line-strong); color: var(--green); letter-spacing: .04em; }
-.card .detail { border-top: 1px dashed var(--line-strong); padding-top: 12px; font-size: 13px; color: var(--muted); }
-.card .detail ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
-.card .detail li::marker { content: "> "; color: var(--green); }
-.card .detail.locked { font-family: var(--mono); color: var(--green-dim); word-break: break-all; user-select: none; }
-.card .actions { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.decrypt { background: none; border: 1px solid var(--green-dim); color: var(--green); padding: 7px 12px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
-.decrypt:hover { background: var(--green-ghost); }
-.decrypt[disabled] { border-color: var(--line-strong); color: var(--muted); cursor: default; background: none; }
-.card .link { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
-.card.featured { grid-column: 1 / -1; border-color: var(--green-dim); background: linear-gradient(135deg, #0b2213, var(--panel) 60%); }
-.card.featured h3 { font-size: clamp(28px, 4vw, 40px); }
-.card.featured .detail ul { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); column-gap: 28px; }
-.sample { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--void); background: var(--amber); padding: 1px 6px; align-self: flex-start; }
-.card.slot { border-style: dashed; background: transparent; align-items: center; justify-content: center; text-align: center; min-height: 220px; color: var(--muted); }
-.card.slot:hover { transform: none; box-shadow: none; }
-.card.slot .lock { font-family: var(--display); font-size: 48px; color: var(--line-strong); line-height: 1; }
+/* experience */
+.job { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; padding: 20px 0; border-top: 1px solid var(--line); }
+.job:last-child { border-bottom: 1px solid var(--line); }
+@media (max-width: 600px) { .job { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+.job .when { font-family: var(--mono); font-size: 13px; color: var(--green-dim); padding-top: 3px; }
+.job h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.job .org { color: var(--muted); font-weight: 400; }
+.job ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 15px; }
+.job li::marker { color: var(--green); }
+.job .sample { display: inline-block; margin-left: 8px; vertical-align: 2px; }
 
-/* ---------- timeline (experience) ---------- */
-.timeline { display: grid; gap: 0; border-left: 2px solid var(--line-strong); margin-left: 8px; }
-.node { position: relative; padding: 0 0 30px 28px; }
-.node::before { content: ""; position: absolute; left: -8px; top: 6px; width: 14px; height: 14px; background: var(--void); border: 2px solid var(--green-dim); transform: rotate(45deg); transition: background .3s, box-shadow .3s; }
-.node.open::before { background: var(--green); box-shadow: 0 0 12px var(--green); }
-.node-btn { width: 100%; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; display: grid; gap: 2px; }
-.node .when { font-family: var(--display); font-size: 20px; color: var(--green-dim); }
-.node h3 { margin: 0; font: 700 22px/1.2 var(--head); text-transform: uppercase; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.node .org { color: var(--muted); }
-.node .chev { color: var(--green); font-family: var(--display); font-size: 22px; transition: transform .3s; display: inline-block; }
-.node.open .chev { transform: rotate(90deg); }
-.node .body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s ease; }
-.node.open .body { grid-template-rows: 1fr; }
-.node .body > div { overflow: hidden; min-width: 0; }
-.node .body ul { margin: 10px 0 0; padding-left: 18px; color: var(--text); display: grid; gap: 6px; max-width: 72ch; }
-.node .body li::marker { content: "+ "; color: var(--green); }
+/* leadership + volunteering */
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
+@media (max-width: 720px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.sub { font-family: var(--mono); font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin: 0 0 12px; }
+.item { padding: 16px 0; border-top: 1px solid var(--line); }
+.item h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.item .org { color: var(--muted); font-size: 14px; }
+.item p { margin: 6px 0 0; font-size: 15px; }
+.item .sample { display: inline-block; margin-bottom: 6px; }
 
-/* ---------- guild / side quests ---------- */
-.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
-.qcard { border: 1px solid var(--line-strong); background: var(--panel); padding: 18px 20px; display: grid; gap: 8px; position: relative; overflow: hidden; }
-.qcard + .qcard { margin-top: 14px; }
-.qcard h3 { margin: 0; font: 700 19px/1.25 var(--head); text-transform: uppercase; padding-right: 92px; }
-.qcard .org { color: var(--muted); font-size: 13px; }
-.qcard p { margin: 0; font-size: 14px; }
-.qcard .reward { font-size: 12px; color: var(--amber); letter-spacing: .06em; }
-.stamp { position: absolute; top: 14px; right: 14px; font-family: var(--display); font-size: 18px; letter-spacing: .1em; color: var(--green); border: 2px solid var(--green); padding: 0 6px; transform: rotate(6deg); opacity: .85; }
-.stamp.active { color: var(--amber); border-color: var(--amber); }
-.col-label { font-family: var(--display); font-size: 24px; color: var(--green); margin: 0 0 12px; letter-spacing: .06em; }
+/* interests */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { font-family: var(--mono); font-size: 14px; padding: 8px 14px; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s, color .2s; }
+.chip:hover { border-color: var(--green); color: var(--green); }
 
-/* ---------- skill tree ---------- */
-.tree-wrap { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: stretch; }
-@media (max-width: 860px) { .tree-wrap { grid-template-columns: 1fr; } }
-.tree { border: 1px solid var(--line-strong); background: var(--panel); position: relative; aspect-ratio: 4 / 3; max-width: 100%; overflow: hidden; }
-.tree svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.tree svg line { stroke: var(--line-strong); stroke-width: 2; transition: stroke .4s; }
-.tree svg line.lit { stroke: var(--green); filter: drop-shadow(0 0 4px var(--green)); }
-.sk { position: absolute; transform: translate(-50%, -50%); width: 64px; height: 64px; border: 2px solid var(--line-strong); background: var(--void); cursor: pointer; display: grid; place-items: center; font-family: var(--display); font-size: 15px; line-height: 1; text-align: center; color: var(--muted); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); transition: color .3s, background .3s, border-color .3s; padding: 4px; }
-.sk:hover { color: var(--green); background: #0d2414; }
-.sk.on { background: var(--green); color: var(--void); }
-.sk.root { width: 84px; height: 84px; font-size: 18px; background: #0d2414; color: var(--green); }
-@media (max-width: 520px) { .sk { width: 52px; height: 52px; font-size: 12px; } .sk.root { width: 66px; height: 66px; } }
-.sk-info { border: 1px solid var(--line-strong); background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.sk-info .k { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
-.sk-info h3 { margin: 0; font: 700 26px/1.1 var(--head); text-transform: uppercase; color: var(--green); }
-.sk-info p { margin: 0; }
-.sk-info .pts { margin-top: auto; font-family: var(--display); font-size: 22px; color: var(--amber); }
-
-/* ---------- terminal ---------- */
-.term { border: 1px solid var(--green-dim); background: #020603; box-shadow: 0 0 0 1px #000, 0 0 40px #39ff7a14 inset; }
-.term-bar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line-strong); font-size: 12px; color: var(--muted); }
-.term-bar i { width: 10px; height: 10px; border: 1px solid var(--green-dim); display: block; }
+/* terminal */
+.term { border: 1px solid var(--line); background: #030705; font-family: var(--mono); font-size: 14px; }
+.term-bar { padding: 8px 14px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; display: flex; gap: 6px; align-items: center; }
+.term-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
 .term-bar span { margin-left: 8px; }
-.term-out { height: 340px; overflow-y: auto; padding: 14px 16px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
-.term-out .c { color: var(--green); }
-.term-out .m { color: var(--muted); }
-.term-out .a { color: var(--amber); }
-.term-out .e { color: var(--red); }
-.term-in { display: flex; gap: 10px; align-items: center; padding: 10px 16px; border-top: 1px dashed var(--line-strong); }
+.term-out { height: 240px; overflow-y: auto; padding: 14px; white-space: pre-wrap; word-break: break-word; }
+.term-out .g { color: var(--green); } .term-out .m { color: var(--muted); } .term-out .e { color: #ff6b78; }
+.term-in { display: flex; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); }
 .term-in label { color: var(--green); white-space: nowrap; }
-.term-in input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text); font: inherit; caret-color: var(--green); }
-.chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 16px 12px; }
-.chips button { background: none; border: 1px solid var(--line-strong); color: var(--muted); font-size: 12px; padding: 3px 8px; cursor: pointer; }
-.chips button:hover { color: var(--green); border-color: var(--green-dim); }
+.term-in input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text); font: inherit; caret-color: var(--green); }
+.hint { font-family: var(--mono); font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+.hint button { font: inherit; background: none; border: 1px solid var(--line); color: var(--green); padding: 1px 8px; cursor: pointer; margin: 2px; }
+.hint button:hover { border-color: var(--green); }
 
-/* ---------- breach minigame ---------- */
-.breach { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
-@media (max-width: 860px) { .breach { grid-template-columns: 1fr; } }
-.panel { border: 1px solid var(--line-strong); background: var(--panel); padding: 22px; min-width: 0; }
-.panel h3 { margin: 0 0 6px; font: 700 22px/1.2 var(--head); text-transform: uppercase; }
-.panel .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
-.code-in { display: flex; gap: 10px; flex-wrap: wrap; }
-.code-in input { width: 52px; height: 62px; text-align: center; font-family: var(--display); font-size: 40px; background: var(--void); border: 1px solid var(--green-dim); color: var(--green); caret-color: var(--green); }
-.code-in input:focus { outline: none; box-shadow: 0 0 0 2px var(--green), 0 0 16px #39ff7a55; }
-.code-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
-.tries { font-family: var(--display); font-size: 22px; color: var(--amber); }
-.log { margin-top: 16px; display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
-.log div { display: flex; gap: 16px; align-items: center; font-family: var(--display); font-size: 24px; letter-spacing: .3em; padding: 2px 8px; background: #0a1a0f; }
-.log .pegs { letter-spacing: .1em; font-size: 20px; }
-.log .x { color: var(--green); } .log .o { color: var(--amber); } .log .n { color: #2a4a33; }
-.legend { font-size: 12px; color: var(--muted); margin-top: 10px; }
-.legend b { font-weight: 400; } .legend .x { color: var(--green); } .legend .o { color: var(--amber); }
-.comms { display: grid; gap: 14px; }
-.comm { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line-strong); background: var(--void); min-width: 0; }
-.comm .k { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-.comm .v { min-width: 0; overflow-wrap: anywhere; color: var(--text); }
-.comm .v.enc { color: var(--green-dim); filter: blur(.4px); }
-.comm .v a { color: var(--green); }
-.copy { background: none; border: 1px solid var(--line-strong); color: var(--muted); font-size: 11px; padding: 3px 8px; cursor: pointer; text-transform: uppercase; letter-spacing: .1em; }
-.copy:hover { color: var(--green); border-color: var(--green-dim); }
-.copy[hidden] { display: none !important; }
-.breach-status { font-family: var(--display); font-size: 26px; margin: 0 0 14px; color: var(--red); }
-.breach-status.ok { color: var(--green); }
-.bypass { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 12px; margin-top: 14px; }
+/* contact */
+.contact { max-width: 620px; }
+.row { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
+.row:last-child { border-bottom: 1px solid var(--line); }
+.row .k { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.row .v { overflow-wrap: anywhere; }
+.copy { font-family: var(--mono); font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); padding: 2px 10px; cursor: pointer; }
+.copy:hover { color: var(--green); border-color: var(--green); }
 
-/* ---------- toasts & modal ---------- */
-.toasts { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 80; display: grid; gap: 10px; justify-items: end; pointer-events: none; }
-.toast { pointer-events: auto; background: #06140bf2; border: 1px solid var(--green); padding: 12px 16px; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; max-width: min(360px, calc(100vw - 32px)); box-shadow: 0 0 30px #39ff7a33; animation: tin .45s cubic-bezier(.2,.9,.3,1.2) both; }
-.toast.out { animation: tout .35s ease forwards; }
-.toast .ic { grid-row: span 2; font-family: var(--display); font-size: 34px; color: var(--amber); line-height: 1; }
-.toast .t { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--amber); }
-.toast .d { font-weight: 600; color: var(--text); }
-@keyframes tin { from { opacity: 0; transform: translateX(40px) scale(.95); } }
-@keyframes tout { to { opacity: 0; transform: translateX(40px); } }
-.xpfloat { position: fixed; z-index: 90; pointer-events: none; font-family: var(--display); font-size: 24px; color: var(--green); text-shadow: 0 0 10px var(--green); animation: rise 1.2s ease-out forwards; white-space: nowrap; }
-@keyframes rise { to { opacity: 0; transform: translateY(-60px); } }
-.levelup { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; pointer-events: none; }
-.levelup div { font: 700 clamp(44px, 9vw, 96px)/1 var(--head); color: var(--amber); text-shadow: 0 0 30px #ffc94d99; text-transform: uppercase; animation: lv 1.6s ease forwards; text-align: center; }
-.levelup small { display: block; font: 400 22px var(--display); color: var(--text); letter-spacing: .2em; margin-top: 8px; }
-@keyframes lv { 0% { opacity: 0; transform: scale(.6); } 20% { opacity: 1; transform: scale(1.05); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.1); } }
+footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 0 16px 40px; }
 
-.modal { position: fixed; inset: 0; z-index: 85; background: #000c; display: grid; place-items: center; padding: 16px; }
-.modal-box { width: min(640px, 100%); max-height: 86vh; overflow-y: auto; border: 1px solid var(--green-dim); background: var(--panel); padding: 24px; }
-.modal-box header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
-.modal-box h2 { margin: 0; font: 700 26px/1 var(--head); text-transform: uppercase; }
-.modal-box .x { background: none; border: 1px solid var(--line-strong); color: var(--muted); padding: 4px 10px; cursor: pointer; }
-.ach-list { display: grid; gap: 10px; }
-.ach { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line-strong); }
-.ach .ic { font-family: var(--display); font-size: 30px; text-align: center; color: var(--line-strong); }
-.ach.got { border-color: var(--green-dim); background: #0b1f12; }
-.ach.got .ic { color: var(--amber); }
-.ach b { display: block; font-weight: 600; }
-.ach span { font-size: 12px; color: var(--muted); }
-.ach em { font-style: normal; font-family: var(--display); font-size: 20px; color: var(--green); }
-.ach:not(.got) b { color: var(--muted); }
-.reset { margin-top: 16px; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0; }
-
-/* ---------- boot ---------- */
-.boot { position: fixed; inset: 0; z-index: 100; background: var(--void); padding: 24px 16px; display: flex; flex-direction: column; justify-content: flex-end; font-size: 14px; color: var(--green); cursor: pointer; transition: opacity .5s; }
-.boot.gone { opacity: 0; pointer-events: none; }
-.boot pre { margin: 0; white-space: pre-wrap; font: inherit; max-width: 900px; }
-.boot .skip { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; color: var(--muted); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
-
-footer { position: relative; z-index: 2; text-align: center; color: var(--muted); font-size: 12px; padding: 0 16px 40px; letter-spacing: .06em; }
-footer code { color: var(--green-dim); }
-
-.reveal { transition: transform .7s cubic-bezier(.2,.8,.2,1), filter .7s; }
-.reveal.pre { transform: translateY(18px); filter: brightness(.6); }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
-  html { scroll-behavior: auto; }
-}
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
 
-<div class="boot" id="boot" role="presentation"><span class="skip">Click or press any key to skip</span><pre id="bootText"></pre></div>
-
-<canvas id="rain" aria-hidden="true"></canvas>
-<div class="scan" aria-hidden="true"></div>
-<div class="vignette" aria-hidden="true"></div>
-
-<header class="hud">
-  <div class="hud-in">
-    <a class="handle" href="#start">BASHAR<span>.exe</span></a>
-    <div class="lvl">LVL <b id="lvl">1</b></div>
-    <div class="xpbar" title="Explore the site to earn XP">
-      <div class="track"><div class="fill" id="xpfill"></div></div>
-      <small id="xptext">0 / 100 XP</small>
-    </div>
-    <nav class="nav" aria-label="Levels">
-      <a href="#missions" data-nav="missions">Missions</a>
-      <a href="#campaign" data-nav="campaign">Campaign</a>
-      <a href="#guild" data-nav="guild">Guild</a>
-      <a href="#skills" data-nav="skills">Skill tree</a>
-      <a href="#terminal" data-nav="terminal">Terminal</a>
-      <a href="#comms" data-nav="comms">Comms</a>
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="#top"><b>bashar</b>@yousef:~$</a>
+    <nav aria-label="Sections">
+      <a href="#projects">projects</a>
+      <a href="#experience">experience</a>
+      <a href="#leadership">leadership</a>
+      <a href="#interests">interests</a>
+      <a href="#contact">contact</a>
     </nav>
-    <button class="trophy-btn" id="trophyBtn" aria-label="Open achievements">&#9733; <span id="achCount">0/0</span></button>
   </div>
 </header>
 
-<main>
-  <!-- HERO -->
-  <section id="start" class="hero" data-sec="start">
-    <div>
-      <div class="eyebrow">Player 1 connected · Western University</div>
-      <h1 class="name"><span class="glitch" id="glitch" data-text="Bashar">Bashar</span><br><span class="g">Yousef</span></h1>
-      <div class="typed" aria-live="polite"><span id="typed"></span><span class="caret"></span></div>
-      <p class="lede">Student developer who builds real products for real people. This site is a game: explore the levels, decrypt my missions, climb the skill tree and breach the firewall to unlock my contact channel. Every move earns XP.</p>
-      <div class="cta">
-        <a class="btn" href="#missions">Press start <kbd>&#9654;</kbd></a>
-        <a class="btn ghost" href="#terminal">Open terminal <kbd>~</kbd></a>
-      </div>
-      <div class="quests" id="quests" aria-label="Quest tracker"></div>
-    </div>
-    <aside class="sheet" aria-label="Character sheet">
-      <div class="sheet-top">
-        <canvas class="avatar" id="avatar" width="16" height="16" aria-label="Pixel avatar"></canvas>
-        <div>
-          <h3>Bashar Yousef</h3>
-          <div class="cls">Class: Full-stack builder · Faction: Western</div>
-        </div>
-      </div>
-      <div class="stats" id="stats"></div>
-      <div class="sheet-foot"><span>Main quest: <b>ship ClubOS</b></span><span>Status: <b>open to opportunities</b></span></div>
-    </aside>
-  </section>
-
-  <!-- PROJECTS -->
-  <section id="missions" data-sec="missions">
-    <div class="sec-head">
-      <span class="lv">LVL 01</span><h2>Missions</h2><span class="status" data-status="missions">Uncleared</span>
-      <p>Projects I have shipped or am shipping. Each file is encrypted. Hit decrypt to read the mission brief and earn XP.</p>
-    </div>
-    <div class="grid" id="projects"></div>
-  </section>
-
-  <!-- EXPERIENCE -->
-  <section id="campaign" data-sec="campaign">
-    <div class="sec-head">
-      <span class="lv">LVL 02</span><h2>Campaign log</h2><span class="status" data-status="campaign">Uncleared</span>
-      <p>Experience, newest first. Open a checkpoint to replay it.</p>
-    </div>
-    <div class="timeline" id="timeline"></div>
-  </section>
-
-  <!-- LEADERSHIP + VOLUNTEERING -->
-  <section id="guild" data-sec="guild">
-    <div class="sec-head">
-      <span class="lv">LVL 03</span><h2>Guild &amp; side quests</h2><span class="status" data-status="guild">Uncleared</span>
-      <p>Leadership is the guild I run with. Volunteering is the side quests I take on because they matter, not for the loot.</p>
-    </div>
-    <div class="split">
-      <div><h3 class="col-label">&gt; Leadership</h3><div id="leadership"></div></div>
-      <div><h3 class="col-label">&gt; Volunteering</h3><div id="volunteering"></div></div>
+<main id="top">
+  <section class="hero">
+    <div class="prompt">&gt; whoami</div>
+    <h1><span class="glitch" data-text="Bashar">Bashar</span> <span class="glitch last" data-text="Yousef">Yousef</span></h1>
+    <div class="typed" aria-live="polite"><span id="typed"></span><span class="caret"></span></div>
+    <p class="bio">Student developer at Western University. I build software that solves real problems for the people around me. Right now that's ClubOS, an app that helps university clubs run themselves.</p>
+    <div class="cta">
+      <a class="btn" href="#projects">View projects</a>
+      <a class="btn alt" href="#contact">Get in touch</a>
     </div>
   </section>
 
-  <!-- INTERESTS -->
-  <section id="skills" data-sec="skills">
-    <div class="sec-head">
-      <span class="lv">LVL 04</span><h2>Skill tree</h2><span class="status" data-status="skills">Uncleared</span>
-      <p>Interests and the skills behind them. Click a node to unlock it. Unlock every node for a bonus.</p>
-    </div>
-    <div class="tree-wrap">
-      <div class="tree" id="tree"><svg id="treeLines" aria-hidden="true"></svg></div>
-      <div class="sk-info" id="skInfo" aria-live="polite">
-        <span class="k">Selected node</span>
-        <h3>Core</h3>
-        <p>Pick any node on the tree to see what I'm into and why.</p>
-        <span class="pts" id="skPts">0 / 0 nodes unlocked</span>
-      </div>
+  <section id="projects">
+    <h2 data-cmd="01 //">Projects</h2>
+    <div class="projects" id="projectList"></div>
+  </section>
+
+  <section id="experience">
+    <h2 data-cmd="02 //">Experience</h2>
+    <div id="expList"></div>
+  </section>
+
+  <section id="leadership">
+    <h2 data-cmd="03 //">Leadership &amp; volunteering</h2>
+    <div class="two">
+      <div><p class="sub">Leadership</p><div id="leadList"></div></div>
+      <div><p class="sub">Volunteering</p><div id="volList"></div></div>
     </div>
   </section>
 
-  <!-- TERMINAL -->
-  <section id="terminal" data-sec="terminal">
-    <div class="sec-head">
-      <span class="lv">LVL 05</span><h2>Root terminal</h2><span class="status" data-status="terminal">Uncleared</span>
-      <p>The power-user route. Type <code>help</code> to list commands. Some commands are hidden.</p>
-    </div>
+  <section id="interests">
+    <h2 data-cmd="04 //">Interests</h2>
+    <div class="chips" id="chipList"></div>
+  </section>
+
+  <section id="terminal">
+    <h2 data-cmd="05 //">Terminal</h2>
+    <p class="hint">Prefer the command line? Try <button type="button">help</button><button type="button">whoami</button><button type="button">projects</button></p>
     <div class="term">
-      <div class="term-bar"><i></i><i></i><i></i><span>guest@bashar-os: ~</span></div>
+      <div class="term-bar"><i></i><i></i><i></i><span>guest@bashar ~</span></div>
       <div class="term-out" id="termOut" aria-live="polite"></div>
-      <div class="chips" id="chips"></div>
       <form class="term-in" id="termForm" autocomplete="off">
-        <label for="termIn">guest@bashar-os:~$</label>
+        <label for="termIn">$</label>
         <input id="termIn" type="text" spellcheck="false" autocapitalize="off" aria-label="Terminal command">
       </form>
     </div>
   </section>
 
-  <!-- CONTACT MINIGAME -->
-  <section id="comms" data-sec="comms">
-    <div class="sec-head">
-      <span class="lv">LVL 06</span><h2>Breach the firewall</h2><span class="status" data-status="comms">Uncleared</span>
-      <p>My comms channel is locked behind a 4-digit code with no repeated digits. You have 8 attempts. Crack it to unlock contact details.</p>
-    </div>
-    <div class="breach">
-      <div class="panel">
-        <h3>Enter access code</h3>
-        <p class="hint">After each guess the firewall leaks a hint.</p>
-        <form id="codeForm" autocomplete="off">
-          <div class="code-in" id="codeIn">
-            <input id="d0" inputmode="numeric" maxlength="1" aria-label="Digit 1">
-            <input id="d1" inputmode="numeric" maxlength="1" aria-label="Digit 2">
-            <input id="d2" inputmode="numeric" maxlength="1" aria-label="Digit 3">
-            <input id="d3" inputmode="numeric" maxlength="1" aria-label="Digit 4">
-          </div>
-          <div class="code-row">
-            <button class="btn" type="submit">Inject</button>
-            <span class="tries" id="tries">8 attempts left</span>
-          </div>
-        </form>
-        <div class="legend"><b class="x">&#9632;</b> right digit, right slot · <b class="o">&#9632;</b> right digit, wrong slot · <b>&#9633;</b> not in code</div>
-        <div class="log" id="log" aria-live="polite"></div>
-      </div>
-      <div class="panel">
-        <p class="breach-status" id="breachStatus">// CHANNEL ENCRYPTED</p>
-        <div class="comms" id="commsList"></div>
-        <button class="bypass" id="bypass" type="button">In a hurry? Bypass the firewall (no achievement)</button>
-      </div>
-    </div>
+  <section id="contact">
+    <h2 data-cmd="06 //">Contact</h2>
+    <div class="contact" id="contactList"></div>
   </section>
 </main>
 
-<footer>Built as a game, by Bashar Yousef · Try <code>↑ ↑ ↓ ↓ ← → ← → B A</code></footer>
-
-<div class="toasts" id="toasts" aria-live="polite"></div>
-<div class="modal" id="modal" hidden>
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <header><h2 id="modalTitle">Achievements</h2><button class="x" id="modalClose" aria-label="Close">ESC</button></header>
-    <div class="ach-list" id="achList"></div>
-    <button class="reset" id="resetBtn" type="button">Reset my progress</button>
-  </div>
-</div>
+<footer>© Bashar Yousef</footer>
 
 <script>
 /* =====================================================================
-   CONTENT — edit everything about you here.
-   Entries with sample:true show a yellow "SAMPLE" chip until you
-   replace them with your own details and delete the flag.
+   CONTENT: edit everything about you here.
+   Entries with sample: true show a yellow "SAMPLE" label. Replace the
+   text with your own and delete the sample: true line.
    ===================================================================== */
 const DATA = {
   taglines: [
-    "Building ClubOS: the operating system for student clubs.",
-    "Flutter · Supabase · PostgreSQL · Firebase.",
-    "I turn messy group chats into shipped software.",
-    "Currently: leveling up at Western University."
+    "Building ClubOS for university clubs.",
+    "Flutter · Supabase · PostgreSQL.",
+    "Turning group-chat chaos into software."
   ],
-  stats: [ ["Shipping", 92], ["Backend", 86], ["Mobile UI", 84], ["Leadership", 88], ["Curiosity", 99] ],
   projects: [
     {
       featured: true,
       title: "ClubOS",
-      rank: "S-rank · Main quest",
-      status: "In development · iOS & Android",
-      summary: "A cross-platform app that gives university clubs one structured place for tasks, events, announcements, polls, meetings and members, instead of scattered group chats and spreadsheets.",
-      tags: ["Flutter", "Dart", "Supabase", "PostgreSQL", "Riverpod", "GoRouter", "Firebase FCM"],
-      details: [
-        "President → Vice President → Director hierarchy, enforced in the database with Row-Level Security on every table, not just in the app",
-        "Multi-club membership: one account, several clubs, a separate role and approval flow in each",
-        "Audience-targeted polls with one vote per member and eligibility snapshots",
-        "Recurring meeting reminders driven by pg_cron, rolling each meeting to its next occurrence",
-        "App Store-ready account deletion that anonymizes the person but keeps the club's history intact",
-        "Annual term reset and presidency transfer RPCs for real club turnover"
+      meta: "In development · iOS & Android",
+      summary: "A mobile app that gives university clubs one place for tasks, events, announcements, polls, meetings and members, instead of scattered group chats and spreadsheets.",
+      points: [
+        "President, VP and Director roles enforced in the database with Row-Level Security",
+        "One account can belong to several clubs, with a separate role in each",
+        "Audience-targeted polls with one vote per member",
+        "Automated recurring meeting reminders",
+        "Account deletion that keeps the club's history intact",
+        "Yearly term reset and presidency transfer for club turnover"
       ],
-      link: { label: "GitHub", href: "https://github.com/0basharyousef0" }
+      tags: ["Flutter", "Dart", "Supabase", "PostgreSQL", "Riverpod", "Firebase"],
+      link: { label: "GitHub →", href: "https://github.com/0basharyousef0" }
     },
     {
       sample: true,
       title: "Project two",
-      rank: "A-rank",
-      status: "Shipped · 2025",
-      summary: "One sentence on what it does and who it helps. Replace this card in DATA.projects.",
-      tags: ["Python", "React"],
-      details: ["What you built", "The hardest problem you solved", "A result with a number in it"]
+      meta: "2025",
+      summary: "One sentence on what it does and who it helps.",
+      points: ["What you built", "A result with a number in it"],
+      tags: ["Python", "React"]
     },
     {
       sample: true,
       title: "Project three",
-      rank: "B-rank",
-      status: "Hackathon · 2025",
-      summary: "One sentence on what it does and who it helps. Replace this card in DATA.projects.",
-      tags: ["TypeScript", "Node.js"],
-      details: ["What you built", "Your role on the team", "What you'd do next"]
+      meta: "Hackathon · 2025",
+      summary: "One sentence on what it does and who it helps.",
+      points: ["What you built", "Your role on the team"],
+      tags: ["TypeScript"]
     }
   ],
   experience: [
     {
-      when: "2025 — Now",
+      when: "2025 – Now",
       role: "Founder & Developer",
       org: "ClubOS",
       points: [
-        "Designing and building the full product end to end: Flutter client, Supabase/PostgreSQL backend, push notifications",
-        "Wrote the database migrations, RLS policies and server-side RPCs that keep each club's data isolated",
-        "Preparing the iOS App Store release: privacy manifest, entitlements, account deletion flow"
+        "Building the full product: Flutter app, Supabase/PostgreSQL backend and push notifications",
+        "Wrote the database security rules that keep each club's data private"
       ]
     },
-    {
-      sample: true,
-      when: "Summer 2025",
-      role: "Your role",
-      org: "Company name",
-      points: ["What you owned", "What changed because of your work", "Tools you used"]
-    },
-    {
-      when: "2024 — Now",
-      role: "Student",
-      org: "Western University",
-      points: ["Program and year go here", "Relevant courses or awards"]
-    }
+    { sample: true, when: "Summer 2025", role: "Your role", org: "Company", points: ["What you owned", "What changed because of your work"] },
+    { when: "2024 – Now", role: "Student", org: "Western University", points: ["Program and year go here"] }
   ],
   leadership: [
-    { sample: true, title: "Club position", org: "Club name · Western University", text: "What you led, how many people, and one outcome you're proud of.", reward: "+ Team of 12 · 6 events run", active: true },
-    { sample: true, title: "Team lead", org: "Hackathon or project team", text: "How you organized the team and what you shipped.", reward: "+ Delivered in 36 hours" }
+    { sample: true, title: "Club position", org: "Club name", text: "What you led and one outcome you're proud of." }
   ],
   volunteering: [
-    { sample: true, title: "Volunteer role", org: "Organization", text: "Who you helped and what you did.", reward: "+ 40 hours", active: true },
-    { sample: true, title: "Mentor", org: "Program name", text: "Who you mentored and what they achieved.", reward: "+ 8 students" }
+    { sample: true, title: "Volunteer role", org: "Organization", text: "Who you helped and what you did." }
   ],
-  // Skill tree: x/y are percentages inside the tree box. "from" draws the connecting line.
-  skills: [
-    { id: "core", label: "CORE", x: 50, y: 50, root: true, title: "Builder", text: "The root of it all: I like making things that people actually use." },
-    { id: "mobile", label: "MOBILE", x: 22, y: 24, from: "core", title: "Mobile apps", text: "Flutter and Dart. One codebase, native feel on iOS and Android." },
-    { id: "db", label: "DATA", x: 78, y: 24, from: "core", title: "Databases", text: "PostgreSQL, Row-Level Security, triggers and cron jobs. I like when the database enforces the rules." },
-    { id: "lead", label: "LEAD", x: 22, y: 78, from: "core", title: "Leadership", text: "Student clubs taught me that good tools and clear roles make teams move faster." },
-    { id: "cyber", label: "CYBER", x: 78, y: 78, from: "core", title: "Security", text: "Least privilege, audit logs and security reviews. Hence the theme." },
-    { id: "ux", label: "UX", x: 6, y: 50, from: "mobile", title: "Product design", text: "Designing flows people don't have to think about." },
-    { id: "cloud", label: "CLOUD", x: 94, y: 50, from: "db", title: "Cloud & push", text: "Supabase, Firebase Cloud Messaging and serverless backends." },
-    { id: "ai", label: "AI", x: 50, y: 10, from: "core", title: "AI tooling", text: "Building with AI agents and LLM-powered developer tools." },
-    { id: "game", label: "GAMES", x: 50, y: 92, from: "core", title: "Games", text: "Why else would my portfolio have an XP bar? Replace with your own hobbies in DATA.skills." }
-  ],
+  interests: ["Mobile development", "Databases", "Cybersecurity", "Product design", "AI tools", "Student leadership", "Gaming"],
   contact: [
     { k: "Email", v: "you@example.com", copy: true },
     { k: "GitHub", v: "github.com/0basharyousef0", href: "https://github.com/0basharyousef0" },
-    { k: "LinkedIn", v: "linkedin.com/in/your-handle", href: "https://www.linkedin.com/" },
-    { k: "Location", v: "London, Ontario" }
+    { k: "LinkedIn", v: "linkedin.com/in/your-handle", href: "https://www.linkedin.com/" }
   ]
 };
 
-/* =====================================================================
-   GAME ENGINE
-   ===================================================================== */
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* ===================================================================== */
+const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sample = x => x.sample ? '<span class="sample">SAMPLE</span>' : "";
 
-const ACH = [
-  { id: "boot", ic: "&gt;_", name: "Hello, world", desc: "Boot the system", xp: 10 },
-  { id: "explorer", ic: "&#9673;", name: "Cartographer", desc: "Visit every level", xp: 60 },
-  { id: "decrypt1", ic: "#", name: "First crack", desc: "Decrypt a mission file", xp: 15 },
-  { id: "decryptAll", ic: "##", name: "Cryptanalyst", desc: "Decrypt every mission", xp: 50 },
-  { id: "campaign", ic: "&#9670;", name: "Lore master", desc: "Open every campaign checkpoint", xp: 40 },
-  { id: "tree", ic: "&#11041;", name: "Maxed out", desc: "Unlock the whole skill tree", xp: 60 },
-  { id: "term", ic: "$", name: "Shell access", desc: "Run a terminal command", xp: 15 },
-  { id: "sudo", ic: "#!", name: "Root", desc: "Find the hidden hiring command", xp: 40 },
-  { id: "breach", ic: "&#9919;", name: "Firewall breached", desc: "Crack the access code", xp: 100 },
-  { id: "konami", ic: "&#8593;&#8593;", name: "Old school", desc: "Enter the Konami code", xp: 50 },
-  { id: "glitch", ic: "&#8776;", name: "Glitch in the matrix", desc: "Click my name 5 times", xp: 25 },
-  { id: "complete", ic: "&#9733;", name: "100% completion", desc: "Unlock every other achievement", xp: 150 }
-];
+$("#projectList").innerHTML = DATA.projects.map(p => `
+  <article class="card ${p.featured ? "featured" : ""}">
+    ${sample(p)}
+    <div class="meta">${esc(p.meta)}</div>
+    <h3>${esc(p.title)}</h3>
+    <p>${esc(p.summary)}</p>
+    <ul>${p.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+    <div class="tags">${p.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+    ${p.link ? `<a class="link" href="${esc(p.link.href)}" target="_blank" rel="noopener">${esc(p.link.label)}</a>` : ""}
+  </article>`).join("");
 
-const KEY = "bashar-os-v1";
-const store = {
-  load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch { return null; } },
-  save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} }
-};
-const blank = () => ({ xp: 0, ach: [], visited: [], decrypted: [], opened: [], nodes: ["core"], cmds: 0, breached: false, bypassed: false });
-let S = Object.assign(blank(), store.load() || {});
-const has = (arr, v) => S[arr].includes(v);
-const add = (arr, v) => { if (has(arr, v)) return false; S[arr].push(v); store.save(S); return true; };
+$("#expList").innerHTML = DATA.experience.map(e => `
+  <div class="job">
+    <div class="when">${esc(e.when)}</div>
+    <div><h3>${esc(e.role)} <span class="org">· ${esc(e.org)}</span>${sample(e)}</h3>
+    <ul>${e.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+  </div>`).join("");
 
-const LEVEL_XP = 100;
-const levelOf = xp => Math.floor(xp / LEVEL_XP) + 1;
-const TITLES = ["Script kiddie", "Packet sniffer", "Code runner", "Netrunner", "System architect", "Root user", "Legend"];
+const items = list => list.map(i => `<div class="item">${sample(i)}<h3>${esc(i.title)}</h3><div class="org">${esc(i.org)}</div><p>${esc(i.text)}</p></div>`).join("");
+$("#leadList").innerHTML = items(DATA.leadership);
+$("#volList").innerHTML = items(DATA.volunteering);
+$("#chipList").innerHTML = DATA.interests.map(i => `<span class="chip">${esc(i)}</span>`).join("");
 
-function renderXP() {
-  const lv = levelOf(S.xp), into = S.xp % LEVEL_XP;
-  $("#lvl").textContent = lv;
-  $("#xpfill").style.width = into + "%";
-  $("#xptext").textContent = `${into} / ${LEVEL_XP} XP · ${TITLES[Math.min(lv - 1, TITLES.length - 1)]}`;
-  $("#achCount").textContent = `${S.ach.length}/${ACH.length}`;
-}
-
-function floatXP(n, el) {
-  if (!n) return;
-  const f = document.createElement("div");
-  f.className = "xpfloat";
-  f.textContent = `+${n} XP`;
-  let x = innerWidth / 2, y = innerHeight / 2;
-  if (el && el.getBoundingClientRect) { const r = el.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top; }
-  f.style.left = Math.max(16, Math.min(innerWidth - 90, x - 40)) + "px";
-  f.style.top = Math.max(70, y) + "px";
-  document.body.appendChild(f);
-  setTimeout(() => f.remove(), 1300);
-}
-
-function gainXP(n, el) {
-  const before = levelOf(S.xp);
-  S.xp += n; store.save(S);
-  floatXP(n, el);
-  renderXP();
-  const after = levelOf(S.xp);
-  if (after > before) {
-    const l = document.createElement("div");
-    l.className = "levelup";
-    l.innerHTML = `<div>Level ${after}<small>${TITLES[Math.min(after - 1, TITLES.length - 1)]}</small></div>`;
-    document.body.appendChild(l);
-    setTimeout(() => l.remove(), 1700);
-  }
-}
-
-function toast(title, desc, ic = "&#9733;") {
-  const t = document.createElement("div");
-  t.className = "toast";
-  t.innerHTML = `<span class="ic">${ic}</span><span class="t">${title}</span><span class="d">${desc}</span>`;
-  $("#toasts").appendChild(t);
-  setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 400); }, 3600);
-}
-
-function unlock(id) {
-  const a = ACH.find(a => a.id === id);
-  if (!a || !add("ach", id)) return;
-  toast("Achievement unlocked", `${a.name} · +${a.xp} XP`, a.ic);
-  gainXP(a.xp);
-  renderAch(); renderQuests();
-  if (S.ach.length === ACH.length - 1 && !has("ach", "complete")) setTimeout(() => unlock("complete"), 900);
-}
-
-function renderAch() {
-  $("#achList").innerHTML = ACH.map(a => {
-    const got = has("ach", a.id);
-    return `<div class="ach ${got ? "got" : ""}"><span class="ic">${a.ic}</span><div><b>${got ? a.name : (a.id === "sudo" || a.id === "konami" || a.id === "glitch" ? "???" : a.name)}</b><span>${got || !["sudo","konami","glitch"].includes(a.id) ? a.desc : "Hidden achievement"}</span></div><em>${got ? "+" + a.xp : a.xp} XP</em></div>`;
-  }).join("");
-  $("#achCount").textContent = `${S.ach.length}/${ACH.length}`;
-}
-
-/* ---------- quests (checklist under hero) ---------- */
-const SECS = ["missions", "campaign", "guild", "skills", "terminal", "comms"];
-function renderQuests() {
-  const q = [
-    ["Explore all 6 levels", SECS.every(s => has("visited", s))],
-    ["Decrypt the missions", has("ach", "decryptAll")],
-    ["Max the skill tree", has("ach", "tree")],
-    ["Breach the firewall", S.breached]
-  ];
-  $("#quests").innerHTML = q.map(([t, d]) => `<span class="quest ${d ? "done" : ""}">${t}</span>`).join("");
-  SECS.forEach(s => {
-    const v = has("visited", s);
-    const nav = $(`[data-nav="${s}"]`); if (nav) nav.classList.toggle("cleared", v);
+$("#contactList").innerHTML = DATA.contact.map(c => `
+  <div class="row"><span class="k">${esc(c.k)}</span>
+  <span class="v">${c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.v)}</a>` : esc(c.v)}</span>
+  ${c.copy ? `<button class="copy" type="button" data-v="${esc(c.v)}">copy</button>` : "<span></span>"}</div>`).join("");
+document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () => {
+  navigator.clipboard?.writeText(b.dataset.v).then(() => { b.textContent = "copied"; setTimeout(() => b.textContent = "copy", 1400); }, () => {
+    const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); getSelection().removeAllRanges(); getSelection().addRange(r);
   });
-  updateStatus();
-}
-function updateStatus() {
-  const cleared = {
-    missions: DATA.projects.every((_, i) => has("decrypted", i)),
-    campaign: DATA.experience.every((_, i) => has("opened", i)),
-    guild: has("visited", "guild"),
-    skills: has("ach", "tree"),
-    terminal: has("ach", "term"),
-    comms: S.breached || S.bypassed
-  };
-  for (const [k, ok] of Object.entries(cleared)) {
-    const el = $(`[data-status="${k}"]`);
-    if (el) { el.textContent = ok ? "Cleared ✓" : (has("visited", k) ? "In progress" : "Uncleared"); el.classList.toggle("ok", ok); }
+}));
+
+/* name glitch
+   - devices with a mouse: each name glitches over and over while the cursor is on it
+   - touch devices (iPhone, iPad): the first name glitches once every 10 seconds */
+(() => {
+  if (reduced) return;
+  const names = document.querySelectorAll(".glitch");
+  const burst = g => { g.classList.remove("on"); void g.offsetWidth; g.classList.add("on"); setTimeout(() => g.classList.remove("on"), 400); };
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    names.forEach(g => {
+      let timer;
+      g.addEventListener("mouseenter", () => { burst(g); timer = setInterval(() => burst(g), 500); });
+      g.addEventListener("mouseleave", () => { clearInterval(timer); g.classList.remove("on"); });
+    });
+  } else {
+    const first = names[0];
+    setTimeout(() => burst(first), 1200);
+    setInterval(() => burst(first), 10000);
   }
-}
+})();
 
-/* ---------- scramble text effect ---------- */
-const GLYPHS = "01ABCDEF#$%&*<>/\\|=+アイウエオカキクケコ";
-function scramble(el, finalText, dur = 700) {
-  if (reduced) { el.textContent = finalText; return Promise.resolve(); }
-  return new Promise(res => {
-    const start = performance.now();
-    (function frame(t) {
-      const p = Math.min(1, (t - start) / dur);
-      const n = Math.floor(finalText.length * p);
-      let out = finalText.slice(0, n);
-      for (let i = n; i < finalText.length; i++) out += finalText[i] === " " ? " " : GLYPHS[(Math.random() * GLYPHS.length) | 0];
-      el.textContent = out;
-      p < 1 ? requestAnimationFrame(frame) : res();
-    })(start);
-  });
-}
-const noise = len => Array.from({ length: len }, () => GLYPHS[(Math.random() * 16) | 0]).join("");
-
-/* ---------- hero ---------- */
-function initHero() {
-  $("#stats").innerHTML = DATA.stats.map(([k, v]) => `<div class="stat"><span>${esc(k)}</span><span class="bar"><i data-v="${v}"></i></span><output>0</output></div>`).join("");
-  setTimeout(() => $$(".stat").forEach(s => {
-    const i = $("i", s), o = $("output", s), v = +i.dataset.v;
-    i.style.width = v + "%";
-    if (reduced) { o.textContent = v; return; }
-    const t0 = performance.now();
-    (function f(t) { const p = Math.min(1, (t - t0) / 1200); o.textContent = Math.round(v * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(f); })(t0);
-  }), 300);
-
-  // typewriter loop
+/* typewriter */
+(() => {
   const el = $("#typed");
+  if (reduced) { el.textContent = DATA.taglines[0]; return; }
   let li = 0, ci = 0, del = false;
-  if (reduced) { el.textContent = DATA.taglines[0]; }
-  else (function tick() {
+  (function tick() {
     const s = DATA.taglines[li];
     ci += del ? -1 : 1;
     el.textContent = s.slice(0, ci);
-    let wait = del ? 22 : 45;
-    if (!del && ci === s.length) { del = true; wait = 1800; }
-    else if (del && ci === 0) { del = false; li = (li + 1) % DATA.taglines.length; wait = 300; }
+    let wait = del ? 25 : 50;
+    if (!del && ci === s.length) { del = true; wait = 2000; }
+    else if (del && ci === 0) { del = false; li = (li + 1) % DATA.taglines.length; wait = 350; }
     setTimeout(tick, wait);
   })();
+})();
 
-  // glitch name + hidden achievement
-  const g = $("#glitch"); let clicks = 0;
-  const pulse = () => { g.classList.add("on"); setTimeout(() => g.classList.remove("on"), 180); };
-  if (!reduced) setInterval(() => Math.random() < .35 && pulse(), 2200);
-  g.style.cursor = "pointer";
-  g.addEventListener("click", () => { pulse(); if (++clicks >= 5) unlock("glitch"); });
-
-  // pixel avatar (symmetric, seeded from the name)
-  const c = $("#avatar").getContext("2d");
-  let seed = [..."BasharYousef"].reduce((a, ch) => a * 31 + ch.charCodeAt(0) >>> 0, 7);
-  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-  c.fillStyle = "#030805"; c.fillRect(0, 0, 16, 16);
-  for (let y = 2; y < 14; y++) for (let x = 2; x < 8; x++) {
-    if (rnd() > .5) { c.fillStyle = rnd() > .82 ? "#ffc94d" : (rnd() > .5 ? "#39ff7a" : "#1fa652"); c.fillRect(x, y, 1, 1); c.fillRect(15 - x, y, 1, 1); }
-  }
-}
-
-/* ---------- projects ---------- */
-function initProjects() {
-  const root = $("#projects");
-  root.innerHTML = DATA.projects.map((p, i) => {
-    const open = has("decrypted", i);
-    const detailHTML = `<ul>${p.details.map(d => `<li>${esc(d)}</li>`).join("")}</ul>`;
-    return `<article class="card ${p.featured ? "featured" : ""}" data-i="${i}">
-      <div class="meta"><span>${esc(p.status)}</span><span class="rank">${esc(p.rank)}</span></div>
-      ${p.sample ? '<span class="sample">Sample · edit me</span>' : ""}
-      <h3>${esc(p.title)}</h3>
-      <p class="sum">${esc(p.summary)}</p>
-      <div class="tags">${p.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
-      <div class="detail ${open ? "" : "locked"}">${open ? detailHTML : esc(noise(p.featured ? 260 : 110))}</div>
-      <div class="actions">
-        <button class="decrypt" ${open ? "disabled" : ""}>${open ? "Decrypted ✓" : "Decrypt file"}</button>
-        ${p.link ? `<a class="link" href="${esc(p.link.href)}" target="_blank" rel="noopener">${esc(p.link.label)} &#8599;</a>` : ""}
-      </div>
-    </article>`;
-  }).join("") + `<article class="card slot"><span class="lock">[ ? ]</span><div>Next mission loading…<br><small>Add one in DATA.projects</small></div></article>`;
-
-  $$(".card[data-i] .decrypt", root).forEach(btn => btn.addEventListener("click", async () => {
-    const card = btn.closest(".card"), i = +card.dataset.i, p = DATA.projects[i];
-    if (has("decrypted", i)) return;
-    btn.disabled = true; btn.textContent = "Decrypting…";
-    const det = $(".detail", card);
-    await scramble(det, p.details.join("  //  "), 900);
-    det.classList.remove("locked");
-    det.innerHTML = `<ul>${p.details.map(d => `<li>${esc(d)}</li>`).join("")}</ul>`;
-    btn.textContent = "Decrypted ✓";
-    add("decrypted", i);
-    gainXP(20, btn);
-    unlock("decrypt1");
-    if (DATA.projects.every((_, j) => has("decrypted", j))) unlock("decryptAll");
-    updateStatus(); renderQuests();
-  }));
-}
-
-/* ---------- experience ---------- */
-function initTimeline() {
-  $("#timeline").innerHTML = DATA.experience.map((e, i) => `
-    <div class="node" data-i="${i}">
-      <button class="node-btn" aria-expanded="false">
-        <span class="when">${esc(e.when)}</span>
-        <h3><span class="chev">&gt;</span>${esc(e.role)} <span class="org">@ ${esc(e.org)}</span>${e.sample ? '<span class="sample">Sample · edit me</span>' : ""}</h3>
-      </button>
-      <div class="body"><div><ul>${e.points.map(p => `<li>${esc(p)}</li>`).join("")}</ul></div></div>
-    </div>`).join("");
-  $$("#timeline .node-btn").forEach(b => b.addEventListener("click", () => {
-    const n = b.closest(".node"), i = +n.dataset.i;
-    const open = n.classList.toggle("open");
-    b.setAttribute("aria-expanded", open);
-    if (open && add("opened", i)) {
-      gainXP(10, b);
-      if (DATA.experience.every((_, j) => has("opened", j))) unlock("campaign");
-      updateStatus();
-    }
-  }));
-}
-
-/* ---------- guild ---------- */
-function qcards(list) {
-  return list.map(q => `<div class="qcard">
-    <span class="stamp ${q.active ? "active" : ""}">${q.active ? "ACTIVE" : "CLEARED"}</span>
-    ${q.sample ? '<span class="sample">Sample · edit me</span>' : ""}
-    <h3>${esc(q.title)}</h3><span class="org">${esc(q.org)}</span>
-    <p>${esc(q.text)}</p><span class="reward">${esc(q.reward)}</span></div>`).join("");
-}
-function initGuild() { $("#leadership").innerHTML = qcards(DATA.leadership); $("#volunteering").innerHTML = qcards(DATA.volunteering); }
-
-/* ---------- skill tree ---------- */
-function initTree() {
-  const tree = $("#tree"), svg = $("#treeLines");
-  const byId = Object.fromEntries(DATA.skills.map(s => [s.id, s]));
-  svg.setAttribute("viewBox", "0 0 100 100"); svg.setAttribute("preserveAspectRatio", "none");
-  svg.innerHTML = DATA.skills.filter(s => s.from).map(s => { const f = byId[s.from]; return `<line data-to="${s.id}" x1="${f.x}" y1="${f.y}" x2="${s.x}" y2="${s.y}" vector-effect="non-scaling-stroke"></line>`; }).join("");
-  DATA.skills.forEach(s => {
-    const b = document.createElement("button");
-    b.className = "sk" + (s.root ? " root" : "");
-    b.style.left = s.x + "%"; b.style.top = s.y + "%";
-    b.textContent = s.label; b.dataset.id = s.id;
-    b.setAttribute("aria-label", `${s.title} skill node`);
-    tree.appendChild(b);
-    b.addEventListener("click", () => select(s, b));
-  });
-  function paint() {
-    $$(".sk", tree).forEach(b => b.classList.toggle("on", has("nodes", b.dataset.id) && !b.classList.contains("root")));
-    $$("line", svg).forEach(l => l.classList.toggle("lit", has("nodes", l.dataset.to)));
-    $("#skPts").textContent = `${S.nodes.length} / ${DATA.skills.length} nodes unlocked`;
-  }
-  function select(s, b) {
-    const info = $("#skInfo");
-    $("h3", info).textContent = s.title;
-    $("p", info).textContent = s.text;
-    if (add("nodes", s.id)) {
-      gainXP(8, b);
-      if (DATA.skills.every(k => has("nodes", k.id))) { unlock("tree"); updateStatus(); }
-    }
-    paint();
-  }
-  paint();
-}
-
-/* ---------- terminal ---------- */
-function initTerminal() {
+/* terminal */
+(() => {
   const out = $("#termOut"), inp = $("#termIn");
-  const hist = []; let hi = 0;
-  const print = (html, cls = "") => { const d = document.createElement("div"); if (cls) d.className = cls; d.innerHTML = html; out.appendChild(d); out.scrollTop = out.scrollHeight; };
-  const go = id => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }); };
+  const print = html => { const d = document.createElement("div"); d.innerHTML = html; out.appendChild(d); out.scrollTop = out.scrollHeight; };
   const CMDS = {
-    help: () => `<span class="c">Available commands</span>
-  whoami        who is this guy
-  projects      list missions
-  experience    print the campaign log
-  skills        list skill tree nodes
-  stats         show your progress
-  contact       comms status
-  goto &lt;level&gt;   jump to missions | campaign | guild | skills | comms
-  achievements  open the trophy room
-  matrix        follow the white rabbit
-  clear         clear the screen
-<span class="m">…and at least one command that isn't listed.</span>`,
-    whoami: () => `Bashar Yousef. Student developer at Western University.
-Currently building <span class="c">ClubOS</span>, a Flutter + Supabase app for university clubs.
-Likes: databases that enforce their own rules, clean mobile UX, and leading teams.`,
-    ls: () => `<span class="c">missions/  campaign/  guild/  skills/</span>  readme.txt  <span class="m">.secret</span>`,
-    "cat readme.txt": () => `Welcome, operator. Earn XP by exploring. Hidden achievements exist. Try the Konami code.`,
-    "cat .secret": () => `<span class="a">hint: recruiters get root. try: sudo hire bashar</span>`,
-    projects: () => DATA.projects.map((p, i) => `<span class="c">[${i}]</span> ${esc(p.title)} <span class="m">· ${esc(p.status)}</span>`).join("\n"),
-    experience: () => DATA.experience.map(e => `<span class="c">${esc(e.when)}</span>  ${esc(e.role)} @ ${esc(e.org)}`).join("\n"),
-    skills: () => DATA.skills.map(s => `${has("nodes", s.id) ? '<span class="c">[x]</span>' : "[ ]"} ${esc(s.title)}`).join("\n"),
-    stats: () => `level ${levelOf(S.xp)} · ${S.xp} XP total · ${S.ach.length}/${ACH.length} achievements · ${S.visited.length}/${SECS.length} levels visited`,
-    contact: () => S.breached || S.bypassed ? DATA.contact.map(c => `${c.k.padEnd(9)} ${esc(c.v)}`).join("\n") : `<span class="e">ACCESS DENIED.</span> Channel is encrypted. Breach the firewall: <span class="c">goto comms</span>`,
-    achievements: () => { openModal(); return "opening trophy room…"; },
-    matrix: () => { burst(); return `<span class="c">Wake up, Neo…</span>`; },
-    clear: () => { out.innerHTML = ""; return null; },
-    "sudo hire bashar": () => { unlock("sudo"); return `<span class="a">[sudo] password for recruiter: ********
-Access granted. Excellent decision.</span>
-Next step: reach out on the comms channel. <span class="c">goto comms</span>`; },
-    sudo: () => `<span class="e">usage:</span> sudo &lt;something you'd want to do&gt;`,
-    "rm -rf /": () => `<span class="e">Nice try.</span> This system has RLS on every table.`,
-    hack: () => `<span class="c">Initiating hack…</span> just kidding. The real hack is in <span class="c">goto comms</span>.`,
-    exit: () => `There is no exit. Only more XP.`,
-    hello: () => `hey 👋`, hi: () => `hey 👋`
+    help: () => `<span class="g">commands</span>
+  whoami      about me
+  projects    list projects
+  experience  list experience
+  interests   what I'm into
+  contact     how to reach me
+  goto &lt;x&gt;    jump to a section
+  clear       clear the screen`,
+    whoami: () => "Bashar Yousef. Student developer at Western University, building ClubOS.",
+    projects: () => DATA.projects.map(p => `<span class="g">›</span> ${esc(p.title)} <span class="m">· ${esc(p.meta)}</span>`).join("\n"),
+    experience: () => DATA.experience.map(e => `<span class="g">${esc(e.when)}</span>  ${esc(e.role)} · ${esc(e.org)}`).join("\n"),
+    interests: () => DATA.interests.map(esc).join(" · "),
+    contact: () => DATA.contact.map(c => `${c.k.padEnd(9)} ${esc(c.v)}`).join("\n"),
+    "sudo hire bashar": () => `<span class="g">Access granted.</span> Great choice. See the contact section below.`,
+    clear: () => { out.innerHTML = ""; return null; }
   };
   function run(raw) {
     const cmd = raw.trim(); if (!cmd) return;
-    hist.push(cmd); hi = hist.length;
-    print(`<span class="c">guest@bashar-os:~$</span> ${esc(cmd)}`);
+    print(`<span class="g">$</span> ${esc(cmd)}`);
     const lc = cmd.toLowerCase();
     let res;
-    if (lc.startsWith("goto ")) { const id = lc.slice(5).trim(); if (SECS.includes(id) || id === "start") { go(id); res = `<span class="m">warping to ${esc(id)}…</span>`; } else res = `<span class="e">unknown level:</span> ${esc(id)}`; }
-    else if (CMDS[lc]) res = CMDS[lc]();
-    else if (lc.startsWith("sudo ")) res = `<span class="e">guest is not in the sudoers file.</span> This incident will be reported. <span class="m">(close, though)</span>`;
-    else res = `<span class="e">command not found:</span> ${esc(cmd)}. Type <span class="c">help</span>.`;
+    if (lc.startsWith("goto ")) {
+      const id = lc.slice(5).trim(), el = document.getElementById(id);
+      if (el) { el.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }); res = `<span class="m">jumping to ${esc(id)}…</span>`; }
+      else res = `<span class="e">no section named</span> ${esc(id)}`;
+    } else if (CMDS[lc]) res = CMDS[lc]();
+    else res = `<span class="e">command not found:</span> ${esc(cmd)} <span class="m">(try help)</span>`;
     if (res !== null) print(res);
-    S.cmds++; store.save(S);
-    if (S.cmds === 1) gainXP(5, inp);
-    unlock("term"); updateStatus();
   }
   $("#termForm").addEventListener("submit", e => { e.preventDefault(); run(inp.value); inp.value = ""; });
-  inp.addEventListener("keydown", e => {
-    if (e.key === "ArrowUp" && hi > 0) { inp.value = hist[--hi]; e.preventDefault(); }
-    if (e.key === "ArrowDown") { hi = Math.min(hist.length, hi + 1); inp.value = hist[hi] || ""; e.preventDefault(); }
-  });
-  $("#chips").innerHTML = ["help", "whoami", "projects", "ls", "stats"].map(c => `<button type="button">${c}</button>`).join("");
-  $$("#chips button").forEach(b => b.addEventListener("click", () => { run(b.textContent); inp.focus({ preventScroll: true }); }));
-  print(`<span class="c">BasharOS v2.6 · secure shell</span>
-<span class="m">Type 'help' to get started. Use ↑/↓ for history.</span>`);
-}
-
-/* ---------- breach minigame ---------- */
-function initBreach() {
-  const inputs = [0, 1, 2, 3].map(i => $("#d" + i));
-  const MAX = 8;
-  let secret, tries;
-  function newCode() { const d = [..."0123456789"].sort(() => Math.random() - .5); secret = d.slice(0, 4).join(""); tries = MAX; $("#log").innerHTML = ""; $("#tries").textContent = `${tries} attempts left`; }
-  newCode();
-  inputs.forEach((inp, i) => {
-    inp.addEventListener("input", () => { inp.value = inp.value.replace(/\D/g, "").slice(-1); if (inp.value && i < 3) inputs[i + 1].focus(); });
-    inp.addEventListener("keydown", e => { if (e.key === "Backspace" && !inp.value && i > 0) inputs[i - 1].focus(); });
-    inp.addEventListener("paste", e => { const t = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, 4); if (t.length) { e.preventDefault(); t.split("").forEach((c, j) => inputs[j] && (inputs[j].value = c)); inputs[Math.min(3, t.length)].focus(); } });
-  });
-  renderComms();
-  $("#codeForm").addEventListener("submit", e => {
-    e.preventDefault();
-    if (S.breached) return;
-    const g = inputs.map(i => i.value).join("");
-    if (!/^\d{4}$/.test(g) || new Set(g).size < 4) { $("#tries").textContent = "4 different digits, please"; return; }
-    let x = 0, o = 0;
-    [...g].forEach((c, i) => { if (secret[i] === c) x++; else if (secret.includes(c)) o++; });
-    tries--;
-    const pegs = '<span class="x">■</span>'.repeat(x) + '<span class="o">■</span>'.repeat(o) + '<span class="n">□</span>'.repeat(4 - x - o);
-    const row = document.createElement("div"); row.innerHTML = `<span>${g}</span><span class="pegs">${pegs}</span>`;
-    $("#log").prepend(row);
-    inputs.forEach(i => i.value = ""); inputs[0].focus();
-    if (x === 4) {
-      S.breached = true; store.save(S);
-      $("#tries").textContent = `Cracked in ${MAX - tries} ${MAX - tries === 1 ? "try" : "tries"}`;
-      unlock("breach"); burst(); renderComms(true); updateStatus(); renderQuests();
-    } else if (tries <= 0) {
-      $("#tries").textContent = `Locked out. Code was ${secret}. New code generated.`;
-      setTimeout(newCode, 2600);
-    } else $("#tries").textContent = `${tries} attempts left`;
-  });
-  $("#bypass").addEventListener("click", () => { S.bypassed = true; store.save(S); renderComms(true); updateStatus(); });
-}
-function renderComms(animate) {
-  const open = S.breached || S.bypassed;
-  const st = $("#breachStatus");
-  st.textContent = open ? (S.breached ? "// ACCESS GRANTED" : "// BYPASSED") : "// CHANNEL ENCRYPTED";
-  st.classList.toggle("ok", open);
-  $("#bypass").hidden = open;
-  $("#commsList").innerHTML = DATA.contact.map((c, i) => `<div class="comm"><span class="k">${esc(c.k)}</span><span class="v ${open ? "" : "enc"}" data-i="${i}">${open ? (c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.v)}</a>` : esc(c.v)) : esc(noise(c.v.length))}</span><button class="copy" data-v="${esc(c.v)}" ${open ? "" : "hidden"}>Copy</button></div>`).join("");
-  if (open && animate) $$("#commsList .v").forEach(v => { const c = DATA.contact[+v.dataset.i]; scramble(v, c.v, 800).then(() => { if (c.href) v.innerHTML = `<a href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.v)}</a>`; }); });
-  $$("#commsList .copy").forEach(b => b.addEventListener("click", () => {
-    const done = () => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy", 1400); };
-    navigator.clipboard?.writeText(b.dataset.v).then(done, () => { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected"; });
-  }));
-}
-
-/* ---------- matrix rain ---------- */
-let burst = () => {};
-function initRain() {
-  const cv = $("#rain"), ctx = cv.getContext("2d");
-  const chars = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEF";
-  const fs = 16; let cols, drops, w, h;
-  function size() { const d = Math.min(devicePixelRatio || 1, 2); w = innerWidth; h = innerHeight; cv.width = w * d; cv.height = h * d; ctx.setTransform(d, 0, 0, d, 0, 0); cols = Math.ceil(w / fs); drops = Array.from({ length: cols }, () => Math.random() * -h / fs); ctx.fillStyle = "#030805"; ctx.fillRect(0, 0, w, h); }
-  size(); addEventListener("resize", size);
-  let fast = 0;
-  function draw() {
-    ctx.fillStyle = "rgba(3,8,5,0.09)"; ctx.fillRect(0, 0, w, h);
-    ctx.font = fs + "px monospace";
-    for (let i = 0; i < cols; i++) {
-      const ch = chars[(Math.random() * chars.length) | 0];
-      ctx.fillStyle = Math.random() > .975 ? "#d9ffe5" : "#39ff7a";
-      ctx.fillText(ch, i * fs, drops[i] * fs);
-      if (drops[i] * fs > h && Math.random() > .975) drops[i] = 0;
-      drops[i] += fast ? 1.6 : .55;
-    }
-  }
-  if (reduced) { for (let k = 0; k < 60; k++) draw(); burst = () => {}; return; }
-  let last = 0;
-  (function loop(t) { if (!document.hidden && t - last > 45) { draw(); last = t; } requestAnimationFrame(loop); })(0);
-  burst = () => { fast = 1; document.body.classList.add("burst"); setTimeout(() => { fast = 0; document.body.classList.remove("burst"); }, 2600); };
-}
-
-/* ---------- section discovery ---------- */
-function initObserver() {
-  const io = new IntersectionObserver(es => es.forEach(e => {
-    if (!e.isIntersecting) return;
-    e.target.classList.remove("pre");
-    const id = e.target.dataset.sec;
-    if (SECS.includes(id) && add("visited", id)) {
-      gainXP(10);
-      renderQuests();
-      if (SECS.every(s => has("visited", s))) unlock("explorer");
-    }
-  }), { threshold: .25 });
-  $$("section[data-sec]").forEach(s => { if (!reduced && s.id !== "start" && s.getBoundingClientRect().top > innerHeight) s.classList.add("reveal", "pre"); io.observe(s); });
-}
-
-/* ---------- modal ---------- */
-function openModal() { renderAch(); $("#modal").hidden = false; $("#modalClose").focus(); }
-function closeModal() { $("#modal").hidden = true; }
-$("#trophyBtn").addEventListener("click", openModal);
-$("#modalClose").addEventListener("click", closeModal);
-$("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
-$("#resetBtn").addEventListener("click", function () {
-  if (this.dataset.armed) { S = blank(); store.save(S); location.reload(); return; }
-  this.dataset.armed = 1; this.textContent = "Click again to confirm reset";
-});
-
-/* ---------- konami ---------- */
-const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
-let kpos = 0;
-addEventListener("keydown", e => {
-  if (e.key === "Escape" && !$("#modal").hidden) closeModal();
-  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-  kpos = k === KONAMI[kpos] ? kpos + 1 : (k === KONAMI[0] ? 1 : 0);
-  if (kpos === KONAMI.length) { kpos = 0; burst(); unlock("konami"); }
-});
-
-/* ---------- boot sequence ---------- */
-function boot(done) {
-  const el = $("#boot"), pre = $("#bootText");
-  const returning = S.ach.length > 0;
-  const lines = [
-    "BASHAR-OS BIOS v2.6 · (c) Bashar Yousef",
-    "Memory check ........................ 16384K OK",
-    "Mounting /projects .................. OK",
-    "Loading module clubos.flutter ....... OK",
-    "Establishing secure link ............ OK",
-    returning ? `Welcome back, operator. Restoring save: LVL ${levelOf(S.xp)}, ${S.xp} XP` : "New player detected. Initializing save file…",
-    "",
-    "> launching interface_"
-  ];
-  let finished = false;
-  const finish = () => { if (finished) return; finished = true; el.classList.add("gone"); setTimeout(() => el.remove(), 550); removeEventListener("keydown", finish); done(); };
-  if (reduced) { el.remove(); done(); return; }
-  el.addEventListener("click", finish); addEventListener("keydown", finish);
-  let i = 0;
-  (function next() {
-    if (finished) return;
-    if (i >= lines.length) { setTimeout(finish, 350); return; }
-    pre.textContent += lines[i++] + "\n";
-    setTimeout(next, returning ? 70 : 170);
-  })();
-}
-
-/* ---------- start ---------- */
-initRain(); initHero(); initProjects(); initTimeline(); initGuild(); initTree(); initTerminal(); initBreach();
-renderXP(); renderAch(); renderQuests();
-boot(() => { unlock("boot"); initObserver(); });
+  document.querySelectorAll(".hint button").forEach(b => b.addEventListener("click", () => run(b.textContent)));
+  print(`<span class="m">Type 'help' to see commands.</span>`);
+})();
 </script>
 </body>
 </html>
