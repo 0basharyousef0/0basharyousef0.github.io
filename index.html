@@ -54,16 +54,8 @@ section { padding-block: 72px 0; }
 .prompt { font-family: var(--mono); font-size: 14px; color: var(--green-dim); }
 .hero h1 { font: 700 clamp(48px, 9vw, 92px)/1 var(--head); margin: 14px 0 18px; letter-spacing: -.01em; }
 .hero h1 .last { color: var(--green); }
-.glitch { position: relative; display: inline-block; }
-.glitch.last::before { color: var(--text); }
-.glitch::before, .glitch::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; opacity: 0; }
-.glitch.on { animation: jitter .35s steps(2) both; }
-.glitch::before { color: var(--green); }
-.glitch.on::before { opacity: .85; animation: sliceA .35s steps(3) both; }
-.glitch.on::after { opacity: .85; color: #ff4d6d; animation: sliceB .35s steps(3) both; }
-@keyframes jitter { 0% { transform: translate(0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } 100% { transform: translate(0); } }
-@keyframes sliceA { 0% { clip-path: inset(10% 0 60% 0); transform: translate(-4px, 0); } 50% { clip-path: inset(55% 0 20% 0); transform: translate(3px, 0); } 100% { clip-path: inset(30% 0 45% 0); transform: translate(-2px, 0); } }
-@keyframes sliceB { 0% { clip-path: inset(65% 0 5% 0); transform: translate(4px, 0); } 50% { clip-path: inset(15% 0 70% 0); transform: translate(-3px, 0); } 100% { clip-path: inset(40% 0 30% 0); transform: translate(2px, 0); } }
+.bin { display: inline-block; white-space: nowrap; transform-origin: left center; }
+.bin.coding { font-variant-numeric: tabular-nums; text-shadow: 0 0 18px #3dfc8466; }
 .typed { font-family: var(--mono); font-size: clamp(15px, 2vw, 18px); min-height: 1.7em; color: var(--text); display: grid; }
 .typed > * { grid-area: 1 / 1; }
 .typed .sizer { visibility: hidden; }
@@ -193,7 +185,7 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 <main id="top">
   <section class="hero">
     <div class="prompt">&gt; whoami</div>
-    <h1><span class="glitch" data-text="Bashar">Bashar</span> <span class="glitch last" data-text="Yousef">Yousef</span></h1>
+    <h1 aria-label="Bashar Yousef"><span class="bin" data-text="Bashar" aria-hidden="true">Bashar</span> <span class="bin last" data-text="Yousef" aria-hidden="true">Yousef</span></h1>
     <div class="typed" aria-live="polite"><span class="sizer" id="typedSizer" aria-hidden="true"></span><span><span id="typed"></span><span class="caret"></span></span></div>
     <p class="bio">Student developer at Western University. I build software that solves real problems for the people around me. Right now that's ClubOS, an app that helps university clubs run themselves.</p>
     <div class="cta">
@@ -409,23 +401,44 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   });
 }));
 
-/* name glitch
-   - devices with a mouse: each name glitches over and over while the cursor is on it
-   - touch devices (iPhone, iPad): the first name glitches once every 10 seconds */
+/* name → binary
+   - devices with a mouse: each name keeps flipping into random 1s and 0s while the cursor is on it,
+     then decodes back to the name, letter by letter, when the cursor leaves
+   - touch devices (iPhone, iPad): the first name flips to binary for a moment every 10 seconds */
 (() => {
   if (reduced) return;
-  const names = document.querySelectorAll(".glitch");
-  const burst = g => { g.classList.remove("on"); void g.offsetWidth; g.classList.add("on"); setTimeout(() => g.classList.remove("on"), 400); };
+  const names = document.querySelectorAll(".bin");
+  const bits = n => Array.from({ length: n }, () => (Math.random() < .5 ? "0" : "1")).join("");
+  const start = g => {
+    clearInterval(g._t);
+    g.style.width = g.offsetWidth + "px";   // hold the width so the rest of the line doesn't shift
+    g.classList.add("coding");
+    const n = g.dataset.text.length;
+    g.textContent = bits(n);
+    const fit = parseFloat(g.style.width) / g.scrollWidth;   // squeeze the digits into the name's width
+    g.style.transform = fit < 1 ? `scaleX(${fit})` : "";
+    g._t = setInterval(() => { g.textContent = bits(n); }, 70);
+  };
+  const stop = g => {
+    clearInterval(g._t);
+    const word = g.dataset.text;
+    let i = 0;
+    g._t = setInterval(() => {
+      i++;
+      g.textContent = word.slice(0, i) + bits(word.length - i);
+      if (i >= word.length) { clearInterval(g._t); g.classList.remove("coding"); g.style.width = ""; g.style.transform = ""; }
+    }, 55);
+  };
   if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
     names.forEach(g => {
-      let timer;
-      g.addEventListener("mouseenter", () => { burst(g); timer = setInterval(() => burst(g), 500); });
-      g.addEventListener("mouseleave", () => { clearInterval(timer); g.classList.remove("on"); });
+      g.addEventListener("mouseenter", () => start(g));
+      g.addEventListener("mouseleave", () => stop(g));
     });
   } else {
     const first = names[0];
-    setTimeout(() => burst(first), 1200);
-    setInterval(() => burst(first), 10000);
+    const pulse = () => { start(first); setTimeout(() => stop(first), 900); };
+    setTimeout(pulse, 1200);
+    setInterval(pulse, 10000);
   }
 })();
 
