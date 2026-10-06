@@ -64,7 +64,9 @@ section { padding-block: 72px 0; }
 @keyframes jitter { 0% { transform: translate(0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } 100% { transform: translate(0); } }
 @keyframes sliceA { 0% { clip-path: inset(10% 0 60% 0); transform: translate(-4px, 0); } 50% { clip-path: inset(55% 0 20% 0); transform: translate(3px, 0); } 100% { clip-path: inset(30% 0 45% 0); transform: translate(-2px, 0); } }
 @keyframes sliceB { 0% { clip-path: inset(65% 0 5% 0); transform: translate(4px, 0); } 50% { clip-path: inset(15% 0 70% 0); transform: translate(-3px, 0); } 100% { clip-path: inset(40% 0 30% 0); transform: translate(2px, 0); } }
-.typed { font-family: var(--mono); font-size: clamp(15px, 2vw, 18px); min-height: 1.7em; color: var(--text); }
+.typed { font-family: var(--mono); font-size: clamp(15px, 2vw, 18px); min-height: 1.7em; color: var(--text); display: grid; }
+.typed > * { grid-area: 1 / 1; }
+.typed .sizer { visibility: hidden; }
 .caret { display: inline-block; width: .55em; height: 1.1em; background: var(--green); vertical-align: -3px; margin-left: 2px; animation: blink 1s steps(2) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .bio { color: var(--muted); max-width: 58ch; margin: 18px 0 30px; font-size: 17px; }
@@ -192,7 +194,7 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
   <section class="hero">
     <div class="prompt">&gt; whoami</div>
     <h1><span class="glitch" data-text="Bashar">Bashar</span> <span class="glitch last" data-text="Yousef">Yousef</span></h1>
-    <div class="typed" aria-live="polite"><span id="typed"></span><span class="caret"></span></div>
+    <div class="typed" aria-live="polite"><span class="sizer" id="typedSizer" aria-hidden="true"></span><span><span id="typed"></span><span class="caret"></span></span></div>
     <p class="bio">Student developer at Western University. I build software that solves real problems for the people around me. Right now that's ClubOS, an app that helps university clubs run themselves.</p>
     <div class="cta">
       <a class="btn" href="#projects">View projects</a>
@@ -260,9 +262,9 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
    ===================================================================== */
 const DATA = {
   taglines: [
-    "Building ClubOS for university clubs.",
-    "Flutter · Supabase · PostgreSQL.",
-    "Turning group-chat chaos into software."
+    "Student leader and developer.",
+    "Python · Java · SQL · Scripting",
+    "Fascinated by networking, cybersecurity, data science and software development."
   ],
   education: {
     school: "Western University",
@@ -429,6 +431,7 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
 /* typewriter */
 (() => {
   const el = $("#typed");
+  $("#typedSizer").textContent = DATA.taglines.reduce((a, b) => b.length > a.length ? b : a) + " ";
   if (reduced) { el.textContent = DATA.taglines[0]; return; }
   let li = 0, ci = 0, del = false;
   (function tick() {
