@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Bashar Yousef, student developer at Western University.">
+<title>BasharOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one calm reading column; terminal-green used only for accents, links and the interactive shell. Single dark theme by choice. */
+:root {
+  --bg: #050a07;
+  --surface: #0a140e;
+  --line: #173022;
+  --green: #3dfc84;
+  --green-dim: #22a55a;
+  --text: #d6eedd;
+  --muted: #7d9d88;
+  --head: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--body); }
+::selection { background: var(--green); color: var(--bg); }
+a { color: var(--green); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+
+/* header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: #050a07e8; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 960px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 24px; }
+.logo { font-family: var(--mono); font-size: 15px; color: var(--text); }
+.logo b { color: var(--green); font-weight: 500; }
+.top nav { margin-left: auto; display: flex; gap: 22px; font-family: var(--mono); font-size: 13px; }
+.top nav a { color: var(--muted); }
+.top nav a:hover { color: var(--green); text-decoration: none; }
+@media (max-width: 720px) { .top nav { display: none; } }
+
+main { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 0 64px; }
+section { padding-block: 72px 0; }
+
+/* hero */
+.hero { padding-block: 96px 32px; position: relative; }
+.hero::before { content: ""; position: absolute; inset: 0 -16px; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 40px 40px; opacity: .45;
+  mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 70%); }
+.prompt { font-family: var(--mono); font-size: 14px; color: var(--green-dim); }
+.hero h1 { font: 700 clamp(48px, 9vw, 92px)/1 var(--head); margin: 14px 0 18px; letter-spacing: -.01em; }
+.hero h1 .last { color: var(--green); }
+.glitch { position: relative; display: inline-block; }
+.glitch.last::before { color: var(--text); }
+.glitch::before, .glitch::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.glitch.on { animation: jitter .35s steps(2) both; }
+.glitch::before { color: var(--green); }
+.glitch.on::before { opacity: .85; animation: sliceA .35s steps(3) both; }
+.glitch.on::after { opacity: .85; color: #ff4d6d; animation: sliceB .35s steps(3) both; }
+@keyframes jitter { 0% { transform: translate(0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } 100% { transform: translate(0); } }
+@keyframes sliceA { 0% { clip-path: inset(10% 0 60% 0); transform: translate(-4px, 0); } 50% { clip-path: inset(55% 0 20% 0); transform: translate(3px, 0); } 100% { clip-path: inset(30% 0 45% 0); transform: translate(-2px, 0); } }
+@keyframes sliceB { 0% { clip-path: inset(65% 0 5% 0); transform: translate(4px, 0); } 50% { clip-path: inset(15% 0 70% 0); transform: translate(-3px, 0); } 100% { clip-path: inset(40% 0 30% 0); transform: translate(2px, 0); } }
+.typed { font-family: var(--mono); font-size: clamp(15px, 2vw, 18px); min-height: 1.7em; color: var(--text); }
+.caret { display: inline-block; width: .55em; height: 1.1em; background: var(--green); vertical-align: -3px; margin-left: 2px; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.bio { color: var(--muted); max-width: 58ch; margin: 18px 0 30px; font-size: 17px; }
+.cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { font-family: var(--mono); font-size: 14px; padding: 11px 18px; border: 1px solid var(--green); color: var(--green); transition: background .2s, color .2s; }
+.btn:hover { background: var(--green); color: var(--bg); text-decoration: none; }
+.btn.alt { border-color: var(--line); color: var(--text); }
+.btn.alt:hover { border-color: var(--green); background: transparent; color: var(--green); }
+
+/* section heads */
+h2 { font: 700 28px/1.2 var(--head); margin: 0 0 28px; display: flex; align-items: baseline; gap: 12px; }
+h2::before { content: attr(data-cmd); font: 400 14px var(--mono); color: var(--green-dim); }
+
+/* education + certificates */
+.edu { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; }
+@media (max-width: 720px) { .edu { grid-template-columns: minmax(0, 1fr); } }
+.school h3 { margin: 0; font: 700 22px/1.25 var(--head); }
+.school .deg { margin: 6px 0 0; }
+.school .when { font-family: var(--mono); font-size: 13px; color: var(--green-dim); margin-top: 4px; }
+.courses { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.course { font-family: var(--mono); font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); background: var(--surface); }
+.certs { list-style: none; margin: 0; padding: 0; }
+.certs li { padding: 12px 0; border-top: 1px solid var(--line); }
+.certs li:last-child { border-bottom: 1px solid var(--line); }
+.certs b { display: block; font-weight: 600; }
+.certs span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* projects */
+.projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .projects { grid-template-columns: minmax(0, 1fr); } }
+.card { border: 1px solid var(--line); background: var(--surface); padding: 22px; display: flex; flex-direction: column; gap: 10px; transition: border-color .2s, transform .2s; }
+.card:hover { border-color: var(--green-dim); transform: translateY(-2px); }
+.card.featured { grid-column: 1 / -1; }
+.card .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.card h3 { font: 700 22px/1.2 var(--head); margin: 0; }
+.card p { margin: 0; }
+.card ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 15px; display: grid; gap: 4px; }
+.card.featured ul { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+@media (max-width: 720px) { .card.featured ul { grid-template-columns: minmax(0, 1fr); } }
+.card li::marker { color: var(--green); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 6px; }
+.tag { font-family: var(--mono); font-size: 12px; color: var(--green); border: 1px solid var(--line); padding: 1px 8px; }
+.card .link { font-family: var(--mono); font-size: 13px; }
+.sample { align-self: flex-start; font-family: var(--mono); font-size: 11px; color: var(--bg); background: #ffc94d; padding: 0 6px; }
+
+/* experience */
+.job { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 24px; padding: 20px 0; border-top: 1px solid var(--line); }
+.job:last-child { border-bottom: 1px solid var(--line); }
+@media (max-width: 600px) { .job { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+.job .when { font-family: var(--mono); font-size: 13px; color: var(--green-dim); padding-top: 3px; }
+.job h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.job .org { color: var(--muted); font-weight: 400; }
+.job ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 15px; }
+.job li::marker { color: var(--green); }
+.job .sample { display: inline-block; margin-left: 8px; vertical-align: 2px; }
+
+/* leadership + volunteering */
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
+@media (max-width: 720px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.sub { font-family: var(--mono); font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin: 0 0 12px; }
+.item { padding: 16px 0; border-top: 1px solid var(--line); }
+.item h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.item .org { color: var(--muted); font-size: 14px; }
+.item .org span { font-family: var(--mono); font-size: 12px; color: var(--green-dim); margin-left: 6px; }
+.item p { margin: 6px 0 0; font-size: 15px; }
+.item .sample { display: inline-block; margin-bottom: 6px; }
+
+/* interests */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { font-family: var(--mono); font-size: 14px; padding: 8px 14px; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s, color .2s; }
+.chip:hover { border-color: var(--green); color: var(--green); }
+
+/* terminal */
+.term { border: 1px solid var(--line); background: #030705; font-family: var(--mono); font-size: 14px; }
+.term-bar { padding: 8px 14px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; display: flex; gap: 6px; align-items: center; }
+.term-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.term-bar span { margin-left: 8px; }
+.term-out { height: 240px; overflow-y: auto; padding: 14px; white-space: pre-wrap; word-break: break-word; }
+.term-out .g { color: var(--green); } .term-out .m { color: var(--muted); } .term-out .e { color: #ff6b78; }
+.term-in { display: flex; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); }
+.term-in label { color: var(--green); white-space: nowrap; }
+.term-in input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text); font: inherit; caret-color: var(--green); }
+.hint { font-family: var(--mono); font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+.hint button { font: inherit; background: none; border: 1px solid var(--line); color: var(--green); padding: 1px 8px; cursor: pointer; margin: 2px; }
+.hint button:hover { border-color: var(--green); }
+
+/* contact */
+.contact { max-width: 620px; }
+.row { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
+.row:last-child { border-bottom: 1px solid var(--line); }
+.row .k { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.row .v { overflow-wrap: anywhere; }
+.copy { font-family: var(--mono); font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); padding: 2px 10px; cursor: pointer; }
+.copy:hover { color: var(--green); border-color: var(--green); }
+
+footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 0 16px 40px; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="#top"><b>bashar</b>@yousef:~$</a>
+    <nav aria-label="Sections">
+      <a href="#education">education</a>
+      <a href="#projects">projects</a>
+      <a href="#experience">experience</a>
+      <a href="#leadership">leadership</a>
+      <a href="#interests">interests</a>
+      <a href="#contact">contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="prompt">&gt; whoami</div>
+    <h1><span class="glitch" data-text="Bashar">Bashar</span> <span class="glitch last" data-text="Yousef">Yousef</span></h1>
+    <div class="typed" aria-live="polite"><span id="typed"></span><span class="caret"></span></div>
+    <p class="bio">Student developer at Western University. I build software that solves real problems for the people around me. Right now that's ClubOS, an app that helps university clubs run themselves.</p>
+    <div class="cta">
+      <a class="btn" href="#projects">View projects</a>
+      <a class="btn alt" href="#contact">Get in touch</a>
+    </div>
+  </section>
+
+  <section id="education">
+    <h2 data-cmd="01 //">Education &amp; certificates</h2>
+    <div class="edu">
+      <div class="school" id="school"></div>
+      <div><p class="sub">Certificates</p><ul class="certs" id="certList"></ul></div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <h2 data-cmd="02 //">Projects</h2>
+    <div class="projects" id="projectList"></div>
+  </section>
+
+  <section id="experience">
+    <h2 data-cmd="03 //">Experience</h2>
+    <div id="expList"></div>
+  </section>
+
+  <section id="leadership">
+    <h2 data-cmd="04 //">Leadership &amp; volunteering</h2>
+    <div class="two">
+      <div><p class="sub">Leadership</p><div id="leadList"></div></div>
+      <div><p class="sub">Volunteering</p><div id="volList"></div></div>
+    </div>
+  </section>
+
+  <section id="interests">
+    <h2 data-cmd="05 //">Interests</h2>
+    <div class="chips" id="chipList"></div>
+  </section>
+
+  <section id="terminal">
+    <h2 data-cmd="06 //">Terminal</h2>
+    <p class="hint">Prefer the command line? Try <button type="button">help</button><button type="button">whoami</button><button type="button">projects</button></p>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span>guest@bashar ~</span></div>
+      <div class="term-out" id="termOut" aria-live="polite"></div>
+      <form class="term-in" id="termForm" autocomplete="off">
+        <label for="termIn">$</label>
+        <input id="termIn" type="text" spellcheck="false" autocapitalize="off" aria-label="Terminal command">
+      </form>
+    </div>
+  </section>
+
+  <section id="contact">
+    <h2 data-cmd="07 //">Contact</h2>
+    <div class="contact" id="contactList"></div>
+  </section>
+</main>
+
+<footer>© Bashar Yousef</footer>
+
+<script>
+/* =====================================================================
+   CONTENT: edit everything about you here.
+   Entries with sample: true show a yellow "SAMPLE" label. Replace the
+   text with your own and delete the sample: true line.
+   ===================================================================== */
+const DATA = {
+  taglines: [
+    "Building ClubOS for university clubs.",
+    "Flutter · Supabase · PostgreSQL.",
+    "Turning group-chat chaos into software."
+  ],
+  education: {
+    school: "Western University",
+    degree: "B.Sc. Computer Science, Minor in Data Science",
+    program: "Science Co-op Program",
+    when: "Sep. 2023 – Dec. 2027 (expected)",
+    courses: [
+      "Databases I & II", "Machine Learning", "Data Structures & Algorithms", "Software Engineering",
+      "Object Oriented Design & Analysis", "Systems Programming", "Operating Systems", "Web Development",
+      "IBM Mainframe", "Linear Algebra", "Calculus I", "Discrete Math", "Applied Logic for CS", "Statistics", "Data Science"
+    ]
+  },
+  certificates: [
+    { name: "Introduction to Software Engineering", issuer: "IBM · Coursera" },
+    { name: "Git and GitHub", issuer: "IBM · Coursera" }
+  ],
+  projects: [
+    {
+      featured: true,
+      title: "ClubOS",
+      meta: "In development · iOS & Android",
+      summary: "A mobile app that gives university clubs one place for tasks, events, announcements, polls, meetings and members, instead of scattered group chats and spreadsheets.",
+      points: [
+        "President, VP and Director roles enforced in the database with Row-Level Security",
+        "One account can belong to several clubs, with a separate role in each",
+        "Audience-targeted polls with one vote per member",
+        "Automated recurring meeting reminders",
+        "Account deletion that keeps the club's history intact",
+        "Yearly term reset and presidency transfer for club turnover"
+      ],
+      tags: ["Flutter", "Dart", "Supabase", "PostgreSQL", "Riverpod", "Firebase"],
+      link: { label: "View on GitHub →", href: "https://github.com/0basharyousef0/ClubOS" }
+    }
+  ],
+  experience: [
+    {
+      when: "Nov. 2025 – Feb. 2026",
+      role: "AI Training Contributor",
+      org: "Outlier",
+      points: [
+        "Wrote and refined roughly 60 structured prompts to improve large language model accuracy, consistency and instruction following",
+        "Evaluated about 85 AI-generated responses per week for logic and guideline compliance, diagnosing recurring defects across 4 review cycles and applying prompt fixes that cut repeat errors"
+      ]
+    },
+    {
+      when: "Jul. 2025 – Aug. 2025",
+      role: "Client Facing Intern",
+      org: "Deloitte",
+      points: [
+        "Validated client financial records across invoices, expense reports and spreadsheets, flagging discrepancies to senior team members under engagement deadlines"
+      ]
+    }
+  ],
+  leadership: [
+    {
+      title: "Vice President of Finance",
+      org: "Western Cyber Society",
+      when: "Sep. 2025 – Present",
+      text: "Manage a $12K term budget across FAANG Day, IBM Night and the Canadian Tech Summit while overseeing a team of directors. Secured over $5K in grants and sponsorships, and lead sponsor outreach to companies including Amazon, IBM and Google."
+    },
+    {
+      title: "Finance Director",
+      org: "Western Cyber Society",
+      text: "Director on the finance team before being promoted to Vice President of Finance."
+    },
+    {
+      title: "Vice President of Finance",
+      org: "Jordanian Cultural Club",
+      when: "2026 – 27",
+      text: "Oversee the club's finance directors."
+    },
+    {
+      title: "Vice President of Events",
+      org: "Jordanian Cultural Club",
+      when: "2025 – 26",
+      text: "Ran 4+ events per semester for 50 to 150 attendees."
+    }
+  ],
+  volunteering: [
+    {
+      title: "Teaching Assistant",
+      org: "Code Ninjas",
+      when: "Oct. 2022 – Jan. 2023",
+      text: "Mentored 18 students in Python and Scratch, leading small-group sessions on debugging and problem solving."
+    }
+  ],
+  interests: ["Mobile development", "Databases", "Cybersecurity", "Product design", "AI tools", "Student leadership", "Gaming"],
+  contact: [
+    { k: "Email", v: "basharkyousef2@gmail.com", copy: true },
+    { k: "LinkedIn", v: "linkedin.com/in/bashar-khaled-yousef", href: "https://www.linkedin.com/in/bashar-khaled-yousef/" },
+    { k: "GitHub", v: "github.com/0basharyousef0", href: "https://github.com/0basharyousef0" },
+    { k: "Location", v: "London, Ontario" }
+  ]
+};
+
+/* ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sample = x => x.sample ? '<span class="sample">SAMPLE</span>' : "";
+
+const ed = DATA.education;
+$("#school").innerHTML = `<h3>${esc(ed.school)}</h3><p class="deg">${esc(ed.degree)} · ${esc(ed.program)}</p>
+  <div class="when">${esc(ed.when)}</div>
+  <p class="sub" style="margin-top:22px">Relevant courses</p>
+  <div class="courses">${ed.courses.map(c => `<span class="course">${esc(c)}</span>`).join("")}</div>`;
+$("#certList").innerHTML = DATA.certificates.map(c => `<li><b>${esc(c.name)}</b><span>${esc(c.issuer)}</span></li>`).join("");
+
+$("#projectList").innerHTML = DATA.projects.map(p => `
+  <article class="card ${p.featured ? "featured" : ""}">
+    ${sample(p)}
+    <div class="meta">${esc(p.meta)}</div>
+    <h3>${esc(p.title)}</h3>
+    <p>${esc(p.summary)}</p>
+    <ul>${p.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+    <div class="tags">${p.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+    ${p.link ? `<a class="link" href="${esc(p.link.href)}" target="_blank" rel="noopener">${esc(p.link.label)}</a>` : ""}
+  </article>`).join("");
+
+$("#expList").innerHTML = DATA.experience.map(e => `
+  <div class="job">
+    <div class="when">${esc(e.when)}</div>
+    <div><h3>${esc(e.role)} <span class="org">· ${esc(e.org)}</span>${sample(e)}</h3>
+    <ul>${e.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+  </div>`).join("");
+
+const items = list => list.map(i => `<div class="item">${sample(i)}<h3>${esc(i.title)}</h3><div class="org">${esc(i.org)}${i.when ? `<span>${esc(i.when)}</span>` : ""}</div><p>${esc(i.text)}</p></div>`).join("");
+$("#leadList").innerHTML = items(DATA.leadership);
+$("#volList").innerHTML = items(DATA.volunteering);
+$("#chipList").innerHTML = DATA.interests.map(i => `<span class="chip">${esc(i)}</span>`).join("");
+
+$("#contactList").innerHTML = DATA.contact.map(c => `
+  <div class="row"><span class="k">${esc(c.k)}</span>
+  <span class="v">${c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.v)}</a>` : esc(c.v)}</span>
+  ${c.copy ? `<button class="copy" type="button" data-v="${esc(c.v)}">copy</button>` : "<span></span>"}</div>`).join("");
+document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () => {
+  navigator.clipboard?.writeText(b.dataset.v).then(() => { b.textContent = "copied"; setTimeout(() => b.textContent = "copy", 1400); }, () => {
+    const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); getSelection().removeAllRanges(); getSelection().addRange(r);
+  });
+}));
+
+/* name glitch
+   - devices with a mouse: each name glitches over and over while the cursor is on it
+   - touch devices (iPhone, iPad): the first name glitches once every 10 seconds */
+(() => {
+  if (reduced) return;
+  const names = document.querySelectorAll(".glitch");
+  const burst = g => { g.classList.remove("on"); void g.offsetWidth; g.classList.add("on"); setTimeout(() => g.classList.remove("on"), 400); };
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    names.forEach(g => {
+      let timer;
+      g.addEventListener("mouseenter", () => { burst(g); timer = setInterval(() => burst(g), 500); });
+      g.addEventListener("mouseleave", () => { clearInterval(timer); g.classList.remove("on"); });
+    });
+  } else {
+    const first = names[0];
+    setTimeout(() => burst(first), 1200);
+    setInterval(() => burst(first), 10000);
+  }
+})();
+
+/* typewriter */
+(() => {
+  const el = $("#typed");
+  if (reduced) { el.textContent = DATA.taglines[0]; return; }
+  let li = 0, ci = 0, del = false;
+  (function tick() {
+    const s = DATA.taglines[li];
+    ci += del ? -1 : 1;
+    el.textContent = s.slice(0, ci);
+    let wait = del ? 25 : 50;
+    if (!del && ci === s.length) { del = true; wait = 2000; }
+    else if (del && ci === 0) { del = false; li = (li + 1) % DATA.taglines.length; wait = 350; }
+    setTimeout(tick, wait);
+  })();
+})();
+
+/* terminal */
+(() => {
+  const out = $("#termOut"), inp = $("#termIn");
+  const print = html => { const d = document.createElement("div"); d.innerHTML = html; out.appendChild(d); out.scrollTop = out.scrollHeight; };
+  const CMDS = {
+    help: () => `<span class="g">commands</span>
+  whoami      about me
+  education   school, courses and certificates
+  projects    list projects
+  experience  list experience
+  interests   what I'm into
+  contact     how to reach me
+  goto &lt;x&gt;    jump to a section
+  clear       clear the screen`,
+    whoami: () => "Bashar Yousef. Student developer at Western University, building ClubOS.",
+    education: () => `<span class="g">${esc(ed.school)}</span> · ${esc(ed.degree)}
+<span class="m">${esc(ed.when)}</span>
+courses: ${ed.courses.map(esc).join(", ")}
+certificates:
+${DATA.certificates.map(c => `  <span class="g">›</span> ${esc(c.name)} <span class="m">(${esc(c.issuer)})</span>`).join("\n")}`,
+    projects: () => DATA.projects.map(p => `<span class="g">›</span> ${esc(p.title)} <span class="m">· ${esc(p.meta)}</span>`).join("\n"),
+    experience: () => DATA.experience.map(e => `<span class="g">${esc(e.when)}</span>  ${esc(e.role)} · ${esc(e.org)}`).join("\n"),
+    interests: () => DATA.interests.map(esc).join(" · "),
+    contact: () => DATA.contact.map(c => `${c.k.padEnd(9)} ${esc(c.v)}`).join("\n"),
+    "sudo hire bashar": () => `<span class="g">Access granted.</span> Great choice. See the contact section below.`,
+    clear: () => { out.innerHTML = ""; return null; }
+  };
+  function run(raw) {
+    const cmd = raw.trim(); if (!cmd) return;
+    print(`<span class="g">$</span> ${esc(cmd)}`);
+    const lc = cmd.toLowerCase();
+    let res;
+    if (lc.startsWith("goto ")) {
+      const id = lc.slice(5).trim(), el = document.getElementById(id);
+      if (el) { el.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }); res = `<span class="m">jumping to ${esc(id)}…</span>`; }
+      else res = `<span class="e">no section named</span> ${esc(id)}`;
+    } else if (CMDS[lc]) res = CMDS[lc]();
+    else res = `<span class="e">command not found:</span> ${esc(cmd)} <span class="m">(try help)</span>`;
+    if (res !== null) print(res);
+  }
+  $("#termForm").addEventListener("submit", e => { e.preventDefault(); run(inp.value); inp.value = ""; });
+  document.querySelectorAll(".hint button").forEach(b => b.addEventListener("click", () => run(b.textContent)));
+  print(`<span class="m">Type 'help' to see commands.</span>`);
+})();
+</script>
+</body>
+</html>
