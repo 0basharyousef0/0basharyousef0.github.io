@@ -132,6 +132,9 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .card.featured { grid-column: 1 / -1; }
 .card .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .card h3 { font: 700 22px/1.2 var(--head); margin: 0; }
+.proj-name { display: flex; align-items: center; gap: 12px; }
+.proj-name img { width: 36px; height: 36px; flex: none; border-radius: 9px; transition: translate .25s; }
+.card:hover .proj-name img { translate: 0 -2px; }
 .card p { margin: 0; }
 .card ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 15px; display: grid; gap: 4px; }
 .card.featured ul { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
@@ -337,6 +340,7 @@ const DATA = {
     {
       featured: true,
       title: "ClubOS",
+      logo: "clubos-logo.png",
       meta: "In development · iOS & Android",
       summary: "A mobile app that gives university clubs one place for tasks, events, announcements, polls, meetings and members, instead of scattered group chats and spreadsheets.",
       points: [
@@ -432,7 +436,7 @@ $("#projectList").innerHTML = DATA.projects.map(p => `
   <article class="card ${p.featured ? "featured" : ""}">
     ${sample(p)}
     <div class="meta">${esc(p.meta)}</div>
-    <h3>${esc(p.title)}</h3>
+    <h3 class="proj-name">${p.logo ? `<img src="${esc(p.logo)}" alt="" width="204" height="204">` : ""}<span>${esc(p.title)}</span></h3>
     <p>${esc(p.summary)}</p>
     <ul>${p.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
     <div class="tags">${p.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
