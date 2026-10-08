@@ -104,6 +104,9 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .edu { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; }
 @media (max-width: 720px) { .edu { grid-template-columns: minmax(0, 1fr); } }
 .school h3 { margin: 0; font: 700 22px/1.25 var(--head); }
+.school-name { display: flex; align-items: center; gap: 14px; }
+.school-name img { height: 38px; width: auto; flex: none; opacity: .92; transition: opacity .25s, filter .25s; }
+.school:hover .school-name img { opacity: 1; filter: drop-shadow(0 0 8px #3dfc8455); }
 .school .deg { margin: 6px 0 0; }
 .school .when { font-family: var(--mono); font-size: 13px; color: var(--green-dim); margin-top: 4px; }
 .courses { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -191,11 +194,8 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 
 footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 0 16px 40px; }
 
-/* interactive surfaces: a soft green spotlight follows the pointer */
+/* interactive surfaces */
 .card, .job, .item, .row, .certs a, .term, .school { position: relative; }
-.spot::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s;
-  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), #3dfc8412, transparent 70%); }
-.spot:hover::after { opacity: 1; }
 .job .when, .item h3, .row .k { transition: color .25s; }
 .job:hover .when, .row:hover .k { color: var(--green); }
 .item:hover h3, .job:hover h3 { color: #fff; }
@@ -319,6 +319,7 @@ const DATA = {
   ],
   education: {
     school: "Western University",
+    logo: "western-crest.png",
     degree: "B.Sc. Computer Science, Minor in Data Science",
     program: "Science Co-op Program",
     when: "Sep. 2023 – Dec. 2027 (expected)",
@@ -419,7 +420,7 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sample = x => x.sample ? '<span class="sample">SAMPLE</span>' : "";
 
 const ed = DATA.education;
-$("#school").innerHTML = `<h3>${esc(ed.school)}</h3><p class="deg">${esc(ed.degree)} · ${esc(ed.program)}</p>
+$("#school").innerHTML = `<h3 class="school-name">${ed.logo ? `<img src="${esc(ed.logo)}" alt="" width="133" height="112">` : ""}<span>${esc(ed.school)}</span></h3><p class="deg">${esc(ed.degree)} · ${esc(ed.program)}</p>
   <div class="when">${esc(ed.when)}</div>
   <p class="sub" style="margin-top:22px">Relevant courses</p>
   <div class="courses">${ed.courses.map(c => `<span class="course">${esc(c)}</span>`).join("")}</div>`;
@@ -518,16 +519,6 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
       if (i / 2 >= word.length) { clearInterval(t); el.textContent = word; el._busy = false; }
     }, 45);
   };
-
-  // pointer spotlight on every interactive surface
-  document.querySelectorAll(".card, .job, .item, .row, .certs a, .term, .school").forEach(el => {
-    el.classList.add("spot");
-    el.addEventListener("pointermove", e => {
-      const r = el.getBoundingClientRect();
-      el.style.setProperty("--mx", `${e.clientX - r.left}px`);
-      el.style.setProperty("--my", `${e.clientY - r.top}px`);
-    });
-  });
 
   // gentle 3D tilt on project cards (mouse only)
   if (fine && !reduced) document.querySelectorAll(".card, .portrait .frame").forEach(c => {
