@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Bashar Yousef, student developer at Western University.">
+<meta name="description" content="Bashar Yousef, student leader at Western University exploring networking, cybersecurity, data science and software development.">
 <title>BasharOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +21,7 @@
   --head: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --top-h: 57px;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -39,14 +40,41 @@ a:hover { text-decoration: underline; }
 .logo b { color: var(--green); font-weight: 500; }
 .top nav { margin-left: auto; display: flex; gap: 22px; font-family: var(--mono); font-size: 13px; }
 .top nav a { color: var(--muted); }
-.top nav a:hover { color: var(--green); text-decoration: none; }
+.top nav a { position: relative; transition: color .2s; }
+.top nav a:hover, .top nav a.on { color: var(--green); text-decoration: none; }
+.top nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform .3s ease; }
+.top nav a.on::after { transform: scaleX(1); }
+.progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; background: var(--green); transform: scaleX(0); transform-origin: left; box-shadow: 0 0 8px #3dfc8480; pointer-events: none; }
 @media (max-width: 720px) { .top nav { display: none; } }
 
+#dots { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+main, footer { position: relative; z-index: 1; }
 main { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 0 64px; }
 section { padding-block: 72px 0; }
 
 /* hero */
-.hero { padding-block: 96px 32px; position: relative; }
+.hero { min-height: calc(100svh - var(--top-h)); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 48px; align-items: center; align-content: center; padding-block: 48px 110px; position: relative; }
+.hero-text > *, .portrait, .cue { animation: heroIn .7s cubic-bezier(.2,.7,.2,1) both; }
+.hero-text > :nth-child(2) { animation-delay: .08s; } .hero-text > :nth-child(3) { animation-delay: .16s; }
+.hero-text > :nth-child(4) { animation-delay: .24s; } .hero-text > :nth-child(5) { animation-delay: .32s; }
+.portrait { animation-delay: .2s; margin: 0; justify-self: end; width: min(100%, 340px); }
+.portrait .frame { position: relative; aspect-ratio: 1; max-width: 100%; border-radius: 50%; transition: transform .25s ease; }
+.portrait img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.portrait .frame::before { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 1px solid var(--line); pointer-events: none; transition: border-color .3s, inset .3s, box-shadow .3s; }
+.portrait:hover .frame::before { border-color: var(--green-dim); inset: -12px; box-shadow: 0 0 22px #3dfc8426; }
+.portrait figcaption { margin-top: 22px; font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; justify-content: center; gap: 12px; }
+.portrait figcaption b { color: var(--green-dim); font-weight: 400; }
+@media (max-width: 760px) {
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; align-content: center; }
+  .portrait { order: -1; justify-self: start; width: 132px; }
+  .portrait figcaption { display: none; }
+}
+@keyframes heroIn { from { opacity: 0; translate: 0 14px; } }
+.cue { position: absolute; left: 50%; bottom: 28px; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); transition: opacity .4s, color .2s; animation-delay: .9s !important; }
+.cue:hover { color: var(--green); text-decoration: none; }
+.cue i { width: 10px; height: 10px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; rotate: 45deg; animation: nudge 1.8s ease-in-out infinite; }
+@keyframes nudge { 50% { translate: 0 5px; } }
+.scrolled .cue { opacity: 0; pointer-events: none; }
 .hero::before { content: ""; position: absolute; inset: 0 -16px; z-index: -1; pointer-events: none;
   background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 40px 40px; opacity: .45;
@@ -70,7 +98,7 @@ section { padding-block: 72px 0; }
 
 /* section heads */
 h2 { font: 700 28px/1.2 var(--head); margin: 0 0 28px; display: flex; align-items: baseline; gap: 12px; }
-h2::before { content: attr(data-cmd); font: 400 14px var(--mono); color: var(--green-dim); }
+h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-numeric: tabular-nums; }
 
 /* education + certificates */
 .edu { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; }
@@ -163,11 +191,32 @@ h2::before { content: attr(data-cmd); font: 400 14px var(--mono); color: var(--g
 
 footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 0 16px 40px; }
 
-@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
+/* interactive surfaces: a soft green spotlight follows the pointer */
+.card, .job, .item, .row, .certs a, .term, .school { position: relative; }
+.spot::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), #3dfc8412, transparent 70%); }
+.spot:hover::after { opacity: 1; }
+.job .when, .item h3, .row .k { transition: color .25s; }
+.job:hover .when, .row:hover .k { color: var(--green); }
+.item:hover h3, .job:hover h3 { color: #fff; }
+.job li, .card li { transition: translate .25s; }
+.job:hover li, .card:hover li { translate: 3px 0; }
+.chip, .course { transition: border-color .2s, color .2s, translate .2s, box-shadow .2s; }
+.chip:hover, .course:hover { translate: 0 -2px; border-color: var(--green-dim); color: var(--green); box-shadow: 0 6px 16px #00000066; }
+.card { transform-style: preserve-3d; will-change: transform; }
+
+/* scroll reveal: items rise in as you scroll down and drop in as you scroll back up */
+.rv-on .rv { opacity: 0; translate: 0 var(--dy, 18px);
+  transition: opacity .6s ease var(--rd, 0s), translate .7s cubic-bezier(.2,.7,.2,1) var(--rd, 0s),
+              transform .25s ease, border-color .2s, color .2s, box-shadow .2s, background .2s; }
+.rv-on .rv.in { opacity: 1; translate: 0 0; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
 
+<canvas id="dots" aria-hidden="true"></canvas>
 <header class="top">
   <div class="top-in">
     <a class="logo" href="#top"><b>bashar</b>@yousef:~$</a>
@@ -180,18 +229,28 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
       <a href="#contact">contact</a>
     </nav>
   </div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
 </header>
 
 <main id="top">
-  <section class="hero">
+  <section class="hero" id="home">
+    <div class="hero-text">
     <div class="prompt">&gt; whoami</div>
     <h1 aria-label="Bashar Yousef"><span class="bin" data-text="Bashar" aria-hidden="true">Bashar</span> <span class="bin last" data-text="Yousef" aria-hidden="true">Yousef</span></h1>
     <div class="typed" aria-live="polite"><span class="sizer" id="typedSizer" aria-hidden="true"></span><span><span id="typed"></span><span class="caret"></span></span></div>
-    <p class="bio">Student developer at Western University. I build software that solves real problems for the people around me. Right now that's ClubOS, an app that helps university clubs run themselves.</p>
+    <p class="bio">Student leader at Western University, curious about how systems work under the hood. I spend my time exploring networking, cybersecurity, data science and software development, and digging into databases and the systems built on top of them.</p>
     <div class="cta">
       <a class="btn" href="#projects">View projects</a>
       <a class="btn alt" href="#contact">Get in touch</a>
     </div>
+    </div>
+    <figure class="portrait">
+      <div class="frame">
+        <img src="bashar.jpg" alt="Portrait of Bashar Yousef" width="800" height="800" decoding="async">
+      </div>
+      <figcaption><span>// bashar.jpg</span><b>London, ON</b></figcaption>
+    </figure>
+    <a class="cue" href="#education" aria-label="Scroll to the next section">scroll<i></i></a>
   </section>
 
   <section id="education">
@@ -442,6 +501,152 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   }
 })();
 
+/* ---------- scroll + interaction layer ---------- */
+(() => {
+  const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  // section numbers: render as real text so they can decode from binary on reveal
+  document.querySelectorAll("h2[data-cmd]").forEach(h => h.insertAdjacentHTML("afterbegin", `<span class="cmd">${h.dataset.cmd}</span>`));
+  const decode = el => {
+    const word = el.textContent;
+    if (reduced || el._busy) return;
+    el._busy = true;
+    let i = 0;
+    const t = setInterval(() => {
+      i++;
+      el.textContent = [...word].map((c, k) => k < i / 2 || !/\d/.test(c) ? c : (Math.random() < .5 ? "0" : "1")).join("");
+      if (i / 2 >= word.length) { clearInterval(t); el.textContent = word; el._busy = false; }
+    }, 45);
+  };
+
+  // pointer spotlight on every interactive surface
+  document.querySelectorAll(".card, .job, .item, .row, .certs a, .term, .school").forEach(el => {
+    el.classList.add("spot");
+    el.addEventListener("pointermove", e => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      el.style.setProperty("--my", `${e.clientY - r.top}px`);
+    });
+  });
+
+  // gentle 3D tilt on project cards (mouse only)
+  if (fine && !reduced) document.querySelectorAll(".card, .portrait .frame").forEach(c => {
+    c.addEventListener("pointermove", e => {
+      const r = c.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      c.style.transform = `perspective(900px) rotateX(${(-y * 3).toFixed(2)}deg) rotateY(${(x * 3).toFixed(2)}deg) translateY(-2px)`;
+    });
+    c.addEventListener("pointerleave", () => { c.style.transform = ""; });
+  });
+
+  // nav: highlight the section you're in; progress line under the header
+  const links = [...document.querySelectorAll(".top nav a")];
+  const bar = $("#progress");
+  const onScroll = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+    document.body.classList.toggle("scrolled", scrollY > 40);
+    let current = "";
+    document.querySelectorAll("main section[id]").forEach(sec => { if (sec.getBoundingClientRect().top < innerHeight * .4) current = sec.id; });
+    links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + current));
+  };
+  addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  // scroll reveal, both directions
+  if (reduced || !("IntersectionObserver" in window)) return;
+  const groups = [
+    "main section:not(.hero) h2", ".school", ".edu .sub", ".course", ".certs li", ".card", ".job",
+    ".two > div > .sub", ".item", ".chip", ".hint", ".term", ".row"
+  ];
+  const items = [];
+  groups.forEach(sel => document.querySelectorAll(sel).forEach(el => {
+    const sibs = [...el.parentElement.children].filter(n => n.matches(sel));
+    const step = sel === ".course" || sel === ".chip" ? .035 : .07;
+    el.style.setProperty("--rd", `${Math.min(sibs.indexOf(el), 10) * step}s`);
+    el.classList.add("rv");
+    items.push(el);
+  }));
+  document.documentElement.classList.add("rv-on");
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    const el = e.target;
+    if (e.isIntersecting) {
+      el.classList.add("in");
+      if (el.matches("h2")) decode(el.querySelector(".cmd"));
+    } else {
+      // left above the viewport → come back down from above; left below → rise from below
+      el.style.setProperty("--dy", e.boundingClientRect.top < 0 ? "-18px" : "18px");
+      el.classList.remove("in");
+    }
+  }), { threshold: .1, rootMargin: "0px 0px -6% 0px" });
+  items.forEach(el => io.observe(el));
+})();
+
+/* background: small dots drifting slowly across a fixed layer that never scrolls */
+(() => {
+  const cv = $("#dots"), ctx = cv.getContext("2d");
+  let w, h, dots = [];
+  const make = () => ({
+    x: Math.random() * w, y: Math.random() * h,
+    r: Math.random() * 1.1 + .5,
+    a: Math.random() * .35 + .12,                  // brightness
+    vx: (Math.random() * .12 + .04),               // all drift gently to the right…
+    vy: (Math.random() - .5) * .06,                // …with a little up/down wander
+    tw: Math.random() * Math.PI * 2,               // twinkle phase
+    ex: 0, ey: 0                                   // extra push from the cursor, fades out
+  });
+  const size = () => {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight;
+    cv.width = w * d; cv.height = h * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    const want = Math.min(160, Math.round(w * h / 9000));
+    while (dots.length < want) dots.push(make());
+    dots.length = want;
+  };
+  const draw = (t = 0) => {
+    ctx.clearRect(0, 0, w, h);
+    for (const p of dots) {
+      const alpha = p.a * (.75 + .25 * Math.sin(t / 1400 + p.tw));
+      ctx.fillStyle = `rgba(61, 252, 132, ${alpha.toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+    }
+  };
+  size();
+  addEventListener("resize", size);
+  if (reduced) { draw(); addEventListener("resize", () => draw()); return; }
+  // the cursor (or a finger) pushes nearby dots away
+  const R = 120, FORCE = .9;
+  let mx = -1e4, my = -1e4;
+  addEventListener("pointermove", e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+  addEventListener("pointerdown", e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+  const away = () => { mx = my = -1e4; };
+  document.addEventListener("pointerleave", away);
+  addEventListener("pointerup", e => { if (e.pointerType !== "mouse") away(); });
+  addEventListener("blur", away);
+
+  let last = performance.now();
+  (function loop(t) {
+    const dt = Math.min(t - last, 50) / 16.7; last = t;
+    if (!document.hidden) {
+      for (const p of dots) {
+        const dx = p.x - mx, dy = p.y - my, d2 = dx * dx + dy * dy;
+        if (d2 < R * R && d2 > .01) {
+          const d = Math.sqrt(d2), f = (1 - d / R) * FORCE * dt;
+          p.ex += dx / d * f; p.ey += dy / d * f;
+        }
+        p.ex *= Math.pow(.92, dt); p.ey *= Math.pow(.92, dt);   // the push fades and the normal drift takes over
+        p.x += (p.vx + p.ex) * dt; p.y += (p.vy + p.ey) * dt;
+        if (p.x < -4) p.x = w + 4;
+        if (p.x > w + 4) { p.x = -4; p.y = Math.random() * h; }
+        if (p.y < -4) p.y = h + 4; else if (p.y > h + 4) p.y = -4;
+      }
+      draw(t);
+    }
+    requestAnimationFrame(loop);
+  })(last);
+})();
+
 /* typewriter */
 (() => {
   const el = $("#typed");
@@ -473,7 +678,7 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   contact     how to reach me
   goto &lt;x&gt;    jump to a section
   clear       clear the screen`,
-    whoami: () => "Bashar Yousef. Student developer at Western University, building ClubOS.",
+    whoami: () => "Bashar Yousef. Student leader at Western University, exploring networking, cybersecurity, data science and software development.",
     education: () => `<span class="g">${esc(ed.school)}</span> · ${esc(ed.degree)}
 <span class="m">${esc(ed.when)}</span>
 courses: ${ed.courses.map(esc).join(", ")}
