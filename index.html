@@ -53,21 +53,20 @@ main { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 0 
 section { padding-block: 72px 0; }
 
 /* hero */
-.hero { min-height: calc(100svh - var(--top-h)); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 48px; align-items: center; align-content: center; padding-block: 48px 110px; position: relative; }
-.hero-text > *, .portrait, .cue { animation: heroIn .7s cubic-bezier(.2,.7,.2,1) both; }
-.hero-text > :nth-child(2) { animation-delay: .08s; } .hero-text > :nth-child(3) { animation-delay: .16s; }
-.hero-text > :nth-child(4) { animation-delay: .24s; } .hero-text > :nth-child(5) { animation-delay: .32s; }
-.portrait { animation-delay: .2s; margin: 0; justify-self: end; width: min(100%, 340px); }
-.portrait .frame { position: relative; aspect-ratio: 1; max-width: 100%; border-radius: 50%; transition: transform .25s ease; }
-.portrait img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.portrait .frame::before { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 1px solid var(--line); pointer-events: none; transition: border-color .3s, inset .3s, box-shadow .3s; }
-.portrait:hover .frame::before { border-color: var(--green-dim); inset: -12px; box-shadow: 0 0 22px #3dfc8426; }
-.portrait figcaption { margin-top: 22px; font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; justify-content: center; gap: 12px; }
-.portrait figcaption b { color: var(--green-dim); font-weight: 400; }
+.hero { min-height: calc(100svh - var(--top-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-block: 4px 70px; position: relative; }
+.portrait3 { position: relative; width: min(100%, calc(62svh * 900 / 758), 620px); aspect-ratio: 900 / 758; }
+.portrait3 canvas, .portrait3 img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.portrait3 img { opacity: 0; }
+.portrait3 canvas { image-rendering: pixelated; }
+.portrait3.fallback img { opacity: 1; }
+.portrait3.fallback canvas { display: none; }
+.portrait3 .float { position: absolute; inset: 0; animation: bop 1.2s steps(1) infinite; }
+/* bop: snaps up one art pixel and back, no in-between frames, so it moves like pixel art */
+@keyframes bop { 50% { translate: 0 calc(var(--px, 3px) * -1); } }
+.portrait3, .hero h1, .cue { animation: heroIn .8s cubic-bezier(.2,.7,.2,1) both; }
+.hero h1 { animation-delay: .25s; }
 @media (max-width: 760px) {
-  .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; align-content: center; }
-  .portrait { order: -1; justify-self: start; width: 132px; }
-  .portrait figcaption { display: none; }
+  .hero { padding-block: 0 64px; }
 }
 @keyframes heroIn { from { opacity: 0; translate: 0 14px; } }
 .cue { position: absolute; left: 50%; bottom: 28px; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); transition: opacity .4s, color .2s; animation-delay: .9s !important; }
@@ -78,9 +77,11 @@ section { padding-block: 72px 0; }
 .hero::before { content: ""; position: absolute; inset: 0 -16px; z-index: -1; pointer-events: none;
   background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 40px 40px; opacity: .45;
-  mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 70%); }
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 0%, transparent 65%); -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 0%, transparent 65%); }
 .prompt { font-family: var(--mono); font-size: 14px; color: var(--green-dim); }
-.hero h1 { font: 700 clamp(48px, 9vw, 92px)/1 var(--head); margin: 14px 0 18px; letter-spacing: -.01em; }
+.hero h1 { font: 700 clamp(40px, 7.5vw, 84px)/1 var(--head); margin: 22px 0 0; letter-spacing: -.01em; }
+.about { display: grid; justify-items: start; }
+.about .bio { margin-bottom: 26px; }
 .hero h1 .last { color: var(--green); }
 .bin { display: inline-block; white-space: nowrap; transform-origin: left center; }
 .bin.coding { font-variant-numeric: tabular-nums; text-shadow: 0 0 18px #3dfc8466; }
@@ -237,23 +238,24 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 
 <main id="top">
   <section class="hero" id="home">
-    <div class="hero-text">
-    <div class="prompt">&gt; whoami</div>
+    <div class="portrait3" id="portrait">
+      <div class="float">
+        <canvas width="900" height="758" role="img" aria-label="Portrait of Bashar Yousef"></canvas>
+        <img src="bashar-avatar.webp" alt="Portrait of Bashar Yousef" width="900" height="758" decoding="async">
+      </div>
+    </div>
     <h1 aria-label="Bashar Yousef"><span class="bin" data-text="Bashar" aria-hidden="true">Bashar</span> <span class="bin last" data-text="Yousef" aria-hidden="true">Yousef</span></h1>
+    <a class="cue" href="#about" aria-label="Scroll to the next section">scroll<i></i></a>
+  </section>
+
+  <section id="about" class="about">
+    <div class="prompt">&gt; whoami</div>
     <div class="typed" aria-live="polite"><span class="sizer" id="typedSizer" aria-hidden="true"></span><span><span id="typed"></span><span class="caret"></span></span></div>
     <p class="bio">Student leader at Western University, curious about how systems work under the hood. I spend my time exploring networking, cybersecurity, data science and software development, and digging into databases and the systems built on top of them.</p>
     <div class="cta">
       <a class="btn" href="#projects">View projects</a>
       <a class="btn alt" href="#contact">Get in touch</a>
     </div>
-    </div>
-    <figure class="portrait">
-      <div class="frame">
-        <img src="bashar.jpg" alt="Portrait of Bashar Yousef" width="800" height="800" decoding="async">
-      </div>
-      <figcaption><span>// bashar.jpg</span><b>London, ON</b></figcaption>
-    </figure>
-    <a class="cue" href="#education" aria-label="Scroll to the next section">scroll<i></i></a>
   </section>
 
   <section id="education">
@@ -525,7 +527,7 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   };
 
   // gentle 3D tilt on project cards (mouse only)
-  if (fine && !reduced) document.querySelectorAll(".card, .portrait .frame").forEach(c => {
+  if (fine && !reduced) document.querySelectorAll(".card").forEach(c => {
     c.addEventListener("pointermove", e => {
       const r = c.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
@@ -551,7 +553,7 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   // scroll reveal, both directions
   if (reduced || !("IntersectionObserver" in window)) return;
   const groups = [
-    "main section:not(.hero) h2", ".school", ".edu .sub", ".course", ".certs li", ".card", ".job",
+    "main section:not(.hero) h2", "#about > *", ".school", ".edu .sub", ".course", ".certs li", ".card", ".job",
     ".two > div > .sub", ".item", ".chip", ".hint", ".term", ".row"
   ];
   const items = [];
@@ -640,6 +642,143 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
     }
     requestAnimationFrame(loop);
   })(last);
+})();
+
+/* portrait: the picture is redrawn as fine pixel art. The eyes are painted cell by cell (white,
+   brown iris, pupil, lash line) inside the shape of each eye opening. Looking around moves the
+   iris to the corners, opens the lids wider when looking up, half-closes them looking down, and
+   nudges the eyebrows up or down */
+(() => {
+  const box = $("#portrait"), cv = box.querySelector("canvas"), img = box.querySelector("img"), ctx = cv.getContext("2d");
+  const SW = 900, SH = 758, CELL = 5, W = Math.ceil(SW / CELL), H = Math.ceil(SH / CELL);
+  // eye opening: corners a, b and how far the top / bottom lids bow out; i = iris centre, r = iris radius (picture pixels)
+  const EYES = [{ a: [309, 288], b: [373, 284], ht: 15, hb: 3.5, i: [346, 279.5], r: 14.5 },
+                { a: [431, 277], b: [499, 267], ht: 15, hb: 6, i: [464.5, 265], r: 14.5 }];
+  // eyebrow boxes (picture pixels) that shift one cell up / down with the gaze
+  const BROWS = [[282, 222, 372, 268], [398, 202, 532, 258]].map(([x0, y0, x1, y1]) => [Math.floor(x0 / CELL), Math.floor(y0 / CELL), Math.ceil(x1 / CELL), Math.ceil(y1 / CELL)]);
+  const COL = { white: [208, 194, 188], ring: [52, 28, 20], iris: [104, 56, 36], irisLow: [140, 80, 50], pupil: [20, 11, 8], lash: [38, 20, 14] };
+  let skin = null;   // per eye, per column: the skin colour just above the eye (for a lowered lid)
+  const bow = t => 1 - Math.pow(Math.abs(2 * t - 1), 2.6);
+  const base = document.createElement("canvas"), bctx = base.getContext("2d");
+  base.width = W; base.height = H;
+  // average each CELL×CELL block into one pixel; crisp outline, and the bottom dissolves into scattered pixels
+  const pixelate = () => {
+    const src = document.createElement("canvas"), sx = src.getContext("2d");
+    src.width = W * CELL; src.height = H * CELL; sx.drawImage(img, 0, 0, SW, SH);
+    const S = sx.getImageData(0, 0, W * CELL, H * CELL).data, out = bctx.createImageData(W, H), O = out.data, n = CELL * CELL;
+    for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
+      let R = 0, G = 0, B = 0, A = 0;
+      for (let y = 0; y < CELL; y++) for (let x = 0; x < CELL; x++) {
+        const k = ((r * CELL + y) * W * CELL + c * CELL + x) * 4, a = S[k + 3];
+        R += S[k] * a; G += S[k + 1] * a; B += S[k + 2] * a; A += a;
+      }
+      const k = (r * W + c) * 4, al = A / n / 255;
+      if (A) { O[k] = R / A; O[k + 1] = G / A; O[k + 2] = B / A; }
+      // bottom fade: each pixel is either fully there or gone, at random, thinning out toward the edge
+      const rnd = ((Math.sin(c * 12.9898 + r * 78.233) * 43758.5453) % 1 + 1) % 1;
+      const keep = Math.pow(Math.min(1, (SH - (r + .5) * CELL) / 130), .65);   // the scatter spans the bottom 130px (from the collar down), thinning out toward the edge
+      O[k + 3] = keep < 1 ? (Math.min(al, keep) > rnd ? 255 : 0) : al > .5 ? 255 : 0;
+    }
+    bctx.putImageData(out, 0, 0);
+    skin = EYES.map(e => {
+      const m = {};
+      for (let c = Math.floor(e.a[0] / CELL); c * CELL < e.b[0]; c++) {
+        const t = ((c + .5) * CELL - e.a[0]) / (e.b[0] - e.a[0]), y = e.a[1] + (e.b[1] - e.a[1]) * t - e.ht * bow(Math.min(1, Math.max(0, t))) - CELL * 2.2;
+        const k = (Math.floor(y / CELL) * W + c) * 4; m[c] = [O[k], O[k + 1], O[k + 2]];
+      }
+      return m;
+    });
+  };
+  let scale = 2, gaze = [0, 0];
+  const paint = (c, r, col) => { ctx.fillStyle = `rgb(${col.map(Math.round)})`; ctx.fillRect(c * scale, r * scale, scale, scale); };
+  const draw = () => {
+    const [gx, gy] = gaze.map(v => v / 20);
+    ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(base, 0, 0, cv.width, cv.height);
+    const shift = gy < -.5 ? 1 : gy > .5 ? -1 : 0;   // brows: source one row below (moves up) or above (moves down)
+    if (shift) for (const [c0, r0, c1, r1] of BROWS) {
+      ctx.clearRect(c0 * scale, r0 * scale, (c1 - c0) * scale, (r1 - r0) * scale);
+      ctx.drawImage(base, c0, r0 + shift, c1 - c0, r1 - r0, c0 * scale, r0 * scale, (c1 - c0) * scale, (r1 - r0) * scale);
+    }
+    EYES.forEach((e, n) => {
+      const cx = (e.a[0] + e.b[0]) / 2, hw = (e.b[0] - e.a[0]) / 2, ax = Math.abs(gx);
+      const ix = cx + gx * (hw - e.r * 1.1) + (e.i[0] - cx) * (1 - ax), iy = e.i[1] + gy * 6;
+      const r0 = Math.floor((Math.min(e.a[1], e.b[1]) - e.ht * 1.4) / CELL) - 1;
+      for (let c = Math.floor(e.a[0] / CELL); c * CELL < e.b[0]; c++) {
+        const x = (c + .5) * CELL, t = (x - e.a[0]) / (e.b[0] - e.a[0]);
+        if (t <= 0 || t >= 1) continue;
+        const mid = e.a[1] + (e.b[1] - e.a[1]) * t, top0 = mid - e.ht * bow(t), bot = mid + e.hb * 4 * t * (1 - t);
+        const top = gy < 0 ? mid - e.ht * bow(t) * (1 + .35 * -gy) : top0 + .5 * gy * (bot - top0);
+        for (let r = r0; r * CELL < bot; r++) {
+          const y = (r + .5) * CELL;
+          if (y > top && y < bot) {
+            const d = Math.hypot(x - ix, y - iy);
+            let col = d < 5.5 ? COL.pupil : d < e.r - 3.5 ? (y > iy + 3 ? COL.irisLow : COL.iris) : d < e.r ? COL.ring : COL.white;
+            if (y - top < CELL * 1.2) col = col.map(v => v * .8);
+            paint(c, r, col);
+          } else if (y <= top && y > top - CELL) paint(c, r, COL.lash);           // lash line on the lid edge
+          else if (y <= top - CELL && y > top0 - CELL && skin) paint(c, r, skin[n][c]);   // lowered lid
+        }
+      }
+    });
+  };
+  const fit = () => {
+    const s = Math.max(2, Math.round(box.clientWidth * (devicePixelRatio || 1) / W));
+    if (s !== scale || cv.width !== W * s) { scale = s; cv.width = W * s; cv.height = H * s; draw(); }
+    box.style.setProperty("--px", box.clientWidth / W + "px");   // one art pixel in CSS px, for the bop
+  };
+  let cur = [0, 0], tgt = [0, 0], raf = 0;
+  const step = () => {
+    raf = 0;
+    cur = cur.map((v, i) => v + (tgt[i] - v) * .2);
+    const q = cur.map(v => Math.round(v * 20));
+    if (q.join() !== gaze.join()) { gaze = q; draw(); }
+    if (Math.abs(cur[0] - tgt[0]) > .01 || Math.abs(cur[1] - tgt[1]) > .01) raf = requestAnimationFrame(step);
+  };
+  const aim = (dx, dy) => { tgt = [dx, dy]; if (!raf) raf = requestAnimationFrame(step); };
+  const start = () => {
+    try { pixelate(); }
+    catch (e) { bctx.imageSmoothingQuality = "high"; bctx.drawImage(img, 0, 0, SW / CELL, SH / CELL); }   // picture can't be read (opened from disk)
+    fit(); addEventListener("resize", fit);
+    if (reduced) return;
+    addEventListener("pointermove", e => {
+      if (e.pointerType !== "mouse") return;
+      const r = cv.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return;
+      const ex = r.left + r.width * .45, ey = r.top + r.height * .36, clamp = v => Math.max(-1, Math.min(1, v));
+      aim(clamp((e.clientX - ex) / (innerWidth * .32)), clamp((e.clientY - ey) / (innerHeight * .4)));
+    }, { passive: true });
+    document.addEventListener("pointerleave", () => aim(0, 0));
+    // phones and tablets have no cursor: the eyes follow the way the phone is tilted. Until tilt data
+    // arrives (or if there is none) they glance around now and then
+    if (!matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      let tilting = false, base = null;
+      (function glance() { setTimeout(() => { if (tilting) return; Math.random() < .4 ? aim(0, 0) : aim(Math.random() * 2 - 1, Math.random() * 2 - 1); glance(); }, 1600 + Math.random() * 2200); })();
+      const onTilt = e => {
+        if (e.beta == null || e.gamma == null) return;
+        // turn the reading into screen left-right / up-down, whichever way the phone is held
+        const ang = (screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0;
+        let lr = e.gamma, ud = e.beta;
+        if (ang === 90) [lr, ud] = [e.beta, -e.gamma];
+        else if (ang === -90 || ang === 270) [lr, ud] = [-e.beta, e.gamma];
+        else if (ang === 180) [lr, ud] = [-e.gamma, -e.beta];
+        // "straight ahead" is however the phone is being held; it slowly re-centres so the eyes settle
+        if (!base) base = [lr, ud];
+        base = [base[0] + (lr - base[0]) * .01, base[1] + (ud - base[1]) * .01];
+        const clamp = v => Math.max(-1, Math.min(1, v));
+        if (!tilting && Math.abs(lr - base[0]) + Math.abs(ud - base[1]) < .5) return;   // ignore a still/fake sensor
+        tilting = true;
+        aim(clamp((lr - base[0]) / 18), clamp((base[1] - ud) / 14));
+      };
+      addEventListener("deviceorientation", onTilt);
+      // iPhones only share motion after the visitor allows it, which has to start from a tap
+      const D = window.DeviceOrientationEvent;
+      if (D && typeof D.requestPermission === "function") {
+        const ask = () => { D.requestPermission().catch(() => {}); };
+        addEventListener("touchend", ask, { once: true });
+      }
+    }
+  };
+  (img.complete && img.naturalWidth ? Promise.resolve() : img.decode()).then(start).catch(() => box.classList.add("fallback"));
 })();
 
 /* typewriter */
