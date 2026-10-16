@@ -83,6 +83,8 @@ section { padding-block: 72px 0; }
 .about { display: grid; justify-items: start; }
 .about .bio { margin-bottom: 26px; }
 .hero h1 .last { color: var(--green); }
+.tilt-ask { margin-top: 16px; padding: 8px 14px; font: 12px/1 var(--mono); letter-spacing: .06em; color: var(--green); background: none; border: 1px dashed var(--green-dim); border-radius: 0; cursor: pointer; animation: heroIn .8s .5s both; }
+.tilt-ask[hidden] { display: none; }
 .bin { display: inline-block; white-space: nowrap; transform-origin: left center; }
 .bin.coding { font-variant-numeric: tabular-nums; text-shadow: 0 0 18px #3dfc8466; }
 .typed { font-family: var(--mono); font-size: clamp(15px, 2vw, 18px); min-height: 1.7em; color: var(--text); display: grid; }
@@ -245,6 +247,7 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
       </div>
     </div>
     <h1 aria-label="Bashar Yousef"><span class="bin" data-text="Bashar" aria-hidden="true">Bashar</span> <span class="bin last" data-text="Yousef" aria-hidden="true">Yousef</span></h1>
+    <button class="tilt-ask" id="tiltAsk" type="button" hidden>tap here, then tilt your phone</button>
     <a class="cue" href="#about" aria-label="Scroll to the next section">scroll<i></i></a>
   </section>
 
@@ -770,11 +773,15 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
         aim(clamp((lr - base[0]) / 18), clamp((base[1] - ud) / 14));
       };
       addEventListener("deviceorientation", onTilt);
-      // iPhones only share motion after the visitor allows it, which has to start from a tap
-      const D = window.DeviceOrientationEvent;
+      // iPhones only share motion after the visitor allows it, and the question has to come from a
+      // real tap (a scroll doesn't count), so a small button asks for it. If permission was already
+      // given this visit, the check below succeeds quietly and the button never shows
+      const D = window.DeviceOrientationEvent, btn = $("#tiltAsk");
       if (D && typeof D.requestPermission === "function") {
-        const ask = () => { D.requestPermission().catch(() => {}); };
-        addEventListener("touchend", ask, { once: true });
+        const ask = () => D.requestPermission().then(r => { btn.hidden = true; return r; }, () => "denied");
+        D.requestPermission().then(r => { if (r !== "granted") btn.hidden = false; }, () => { btn.hidden = false; });
+        btn.addEventListener("click", ask);
+        box.addEventListener("click", () => { if (!btn.hidden) ask(); });   // tapping the portrait asks too
       }
     }
   };
