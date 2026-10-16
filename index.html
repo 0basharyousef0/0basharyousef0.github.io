@@ -770,7 +770,7 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
         const clamp = v => Math.max(-1, Math.min(1, v));
         if (!tilting && Math.abs(lr - base[0]) + Math.abs(ud - base[1]) < .5) return;   // ignore a still/fake sensor
         tilting = true;
-        aim(clamp((lr - base[0]) / 18), clamp((base[1] - ud) / 14));
+        aim(clamp((lr - base[0]) / 18), clamp((ud - base[1]) / 14));
       };
       addEventListener("deviceorientation", onTilt);
       // iPhones only share motion after the visitor allows it, and the question has to come from a
