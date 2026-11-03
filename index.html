@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Bashar Yousef, student leader at Western University exploring networking, cybersecurity, data science and software development.">
+<meta name="description" content="Bashar Yousef, student leader at Western University exploring networking, cybersecurity, data science and software development, and how they connect to business.">
 <title>BasharOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -149,7 +149,7 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .sample { align-self: flex-start; font-family: var(--mono); font-size: 11px; color: var(--bg); background: #ffc94d; padding: 0 6px; }
 
 /* experience */
-.job { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 24px; padding: 20px 0; border-top: 1px solid var(--line); }
+.job { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding: 20px 0; border-top: 1px solid var(--line); }
 .job:last-child { border-bottom: 1px solid var(--line); }
 @media (max-width: 600px) { .job { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
 .job .when { font-family: var(--mono); font-size: 13px; color: var(--green-dim); padding-top: 3px; }
@@ -158,6 +158,11 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .job ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 15px; }
 .job li::marker { color: var(--green); }
 .job .sample { display: inline-block; margin-left: 8px; vertical-align: 2px; }
+.job-side { display: grid; align-content: start; justify-items: start; gap: 18px; }
+/* logos sit straight on the page (transparent cut-outs), like the Western crest */
+.job-logo { width: 190px; max-width: 100%; height: auto; opacity: .92; transition: opacity .25s, filter .25s, translate .25s; }
+.job:hover .job-logo { opacity: 1; filter: drop-shadow(0 0 10px #3dfc8440); translate: 0 -2px; }
+@media (max-width: 600px) { .job-side { gap: 12px; } .job-logo { order: -1; width: 180px; margin-bottom: 4px; } }
 
 /* leadership + volunteering */
 .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
@@ -169,6 +174,10 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .item .org span { font-family: var(--mono); font-size: 12px; color: var(--green-dim); margin-left: 6px; }
 .item p { margin: 6px 0 0; font-size: 15px; }
 .item .sample { display: inline-block; margin-bottom: 6px; }
+.item.has-logo { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0 14px; align-items: start; }
+.item-logo { width: 44px; height: 44px; border-radius: 50%; margin-top: 1px; box-shadow: 0 0 0 1px var(--line); transition: box-shadow .25s, translate .25s; }
+.item:hover .item-logo { box-shadow: 0 0 0 1px var(--green-dim), 0 0 14px #3dfc8433; translate: 0 -2px; }
+@media (max-width: 600px) { .item.has-logo { grid-template-columns: 38px minmax(0, 1fr); gap: 0 12px; } .item-logo { width: 38px; height: 38px; } }
 
 /* interests */
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -325,7 +334,7 @@ html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue
   <section id="about" class="about">
     <div class="prompt">&gt; whoami</div>
     <div class="typed" aria-live="polite"><span class="sizer" id="typedSizer" aria-hidden="true"></span><span><span id="typed"></span><span class="caret"></span></span></div>
-    <p class="bio">Student leader at Western University, curious about how systems work under the hood. I spend my time exploring networking, cybersecurity, data science and software development, and digging into databases and the systems built on top of them.</p>
+    <p class="bio">Student leader at Western University, curious about how systems work under the hood. I'm exploring networking, cybersecurity, data science and software development, digging into databases and the systems built on top of them, and learning the business side that ties it all together.</p>
     <div class="cta">
       <a class="btn" href="#projects">View projects</a>
       <a class="btn alt" href="#contact">Get in touch</a>
@@ -397,7 +406,7 @@ const DATA = {
   taglines: [
     "Student leader and developer.",
     "Python · Java · SQL · Scripting",
-    "Fascinated by networking, cybersecurity, data science and software development."
+    "Where networking, cybersecurity, data and software meet business."
   ],
   education: {
     school: "Western University",
@@ -437,8 +446,9 @@ const DATA = {
   experience: [
     {
       when: "Nov. 2025 – Feb. 2026",
-      role: "AI Training Contributor",
-      org: "Outlier",
+      role: "Artificial Intelligence Training",
+      org: "Outlier (freelance, remote)",
+      logo: "outlier-logo.png", logoSize: [600, 135],
       points: [
         "Wrote and refined roughly 60 structured prompts to improve large language model accuracy, consistency and instruction following",
         "Evaluated about 85 AI-generated responses per week for logic and guideline compliance, diagnosing recurring defects across 4 review cycles and applying prompt fixes that cut repeat errors"
@@ -447,9 +457,12 @@ const DATA = {
     {
       when: "Jul. 2025 – Aug. 2025",
       role: "Client Facing Intern",
-      org: "Deloitte",
+      org: "Deloitte (internship, on-site)",
+      logo: "deloitte-logo.png", logoSize: [600, 118],
       points: [
-        "Validated client financial records across invoices, expense reports and spreadsheets, flagging discrepancies to senior team members under engagement deadlines"
+        "Validated client financial records across invoices, expense reports and spreadsheets for accuracy and completeness",
+        "Documented discrepancies and escalated them to senior team members with supporting detail for resolution",
+        "Managed competing priorities under tight engagement deadlines in a fast-paced professional services setting"
       ]
     }
   ],
@@ -457,37 +470,42 @@ const DATA = {
     {
       title: "Vice President of Finance",
       org: "Western Cyber Society",
+      logo: "wcs-logo.png",
       when: "May 2026 – Present",
-      text: "Manage a $12K term budget across FAANG Day, IBM Night and the Canadian Tech Summit while overseeing a team of directors. Secured over $5K in grants and sponsorships, and lead sponsor outreach to companies including Amazon, IBM and Google."
+      text: "Promoted from Finance Director. Plan, track and report on a $12K term budget across FAANG Day, IBM Night, CyberQuest and the Canadian Tech Summit while leading a team of directors. Secured over $5K in grants and sponsorships, and lead ongoing sponsor outreach to tech companies including Amazon, IBM and Google."
     },
     {
       title: "Vice President of Finance",
       org: "Jordanian Cultural Club",
+      logo: "jcc-logo.png",
       when: "Sep. 2026 – Present",
-      text: "Oversee the club's finance directors."
+      text: "Lead the club's finance team for the 2026–27 year, overseeing its finance directors and owning the club's budget. Coming over from VP Events, I plan budgets with a first-hand sense of what each event really costs, and keep spending on track across the year."
     },
     {
       title: "Finance Director",
       org: "Western Cyber Society",
+      logo: "wcs-logo.png",
       when: "Sep. 2025 – Apr. 2026",
-      text: "Director on the finance team before being promoted to Vice President of Finance."
+      text: "Joined the finance team as a director, supporting the budgeting and sponsorship work behind the club's flagship events, including FAANG Day, IBM Night, CyberQuest and the Canadian Tech Summit. Promoted to Vice President of Finance at the end of the year, and now lead the team I started on."
     },
     {
       title: "Vice President of Events",
       org: "Jordanian Cultural Club",
+      logo: "jcc-logo.png",
       when: "Sep. 2025 – Apr. 2026",
-      text: "Ran 4+ events per semester for 50 to 150 attendees."
+      text: "Planned and ran 4+ events every semester for 50 to 150 attendees each, handling everything from venues and logistics to promotion and volunteers. Brought Jordanian culture to the Western community while keeping each event organized, on schedule and within budget."
     }
   ],
   volunteering: [
     {
       title: "Teaching Assistant",
       org: "Code Ninjas",
+      logo: "code-ninjas-logo.png",
       when: "Oct. 2022 – Jan. 2023",
-      text: "Mentored 18 students in Python and Scratch, leading small-group sessions on debugging and problem solving."
+      text: "Volunteered as a teaching assistant, mentoring 18 students in Python and Scratch. Led small-group debugging sessions, teaching students to break problems into steps and work through errors on their own, and helped them turn their ideas into working projects."
     }
   ],
-  interests: ["Networking", "Cybersecurity", "Mobile development", "Databases", "Artificial intelligence", "Software development"],
+  interests: ["Networking", "Cybersecurity", "Mobile development", "Databases", "Artificial intelligence", "Software development", "Tech and business"],
   // the big "Let's work together" block in the contact section
   cta: {
     title: "Let's work together",
@@ -530,12 +548,12 @@ $("#projectList").innerHTML = DATA.projects.map(p => `
 
 $("#expList").innerHTML = DATA.experience.map(e => `
   <div class="job">
-    <div class="when">${esc(e.when)}</div>
+    <div class="job-side"><div class="when">${esc(e.when)}</div>${e.logo ? `<img class="job-logo" src="${esc(e.logo)}" alt="" width="${(e.logoSize || [600, 150])[0]}" height="${(e.logoSize || [600, 150])[1]}">` : ""}</div>
     <div><h3>${esc(e.role)} <span class="org">· ${esc(e.org)}</span>${sample(e)}</h3>
     <ul>${e.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
   </div>`).join("");
 
-const items = list => list.map(i => `<div class="item">${sample(i)}<h3>${esc(i.title)}</h3><div class="org">${esc(i.org)}${i.when ? `<span>${esc(i.when)}</span>` : ""}</div><p>${esc(i.text)}</p></div>`).join("");
+const items = list => list.map(i => `<div class="item${i.logo ? " has-logo" : ""}">${i.logo ? `<img class="item-logo" src="${esc(i.logo)}" alt="" width="160" height="160">` : ""}<div>${sample(i)}<h3>${esc(i.title)}</h3><div class="org">${esc(i.org)}${i.when ? `<span>${esc(i.when)}</span>` : ""}</div><p>${esc(i.text)}</p></div></div>`).join("");
 $("#leadList").innerHTML = items(DATA.leadership);
 $("#volList").innerHTML = items(DATA.volunteering);
 $("#chipList").innerHTML = DATA.interests.map(i => `<span class="chip">${esc(i)}</span>`).join("");
@@ -890,7 +908,7 @@ const decode = el => {
   contact     how to reach me
   goto &lt;x&gt;    jump to a section
   clear       clear the screen`,
-    whoami: () => "Bashar Yousef. Student leader at Western University, exploring networking, cybersecurity, data science and software development.",
+    whoami: () => "Bashar Yousef. Student leader at Western University, exploring networking, cybersecurity, data science and software development, and how they connect to business.",
     education: () => `<span class="g">${esc(ed.school)}</span> · ${esc(ed.degree)}
 <span class="m">${esc(ed.when)}</span>
 courses: ${ed.courses.map(esc).join(", ")}
