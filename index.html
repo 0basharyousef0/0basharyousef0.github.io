@@ -198,7 +198,10 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .copy { font-family: var(--mono); font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); padding: 2px 10px; cursor: pointer; }
 .copy:hover { color: var(--green); border-color: var(--green); }
 
-footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 0 16px 40px; }
+footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 0 16px 76px; }
+.replay { display: block; margin: 16px auto 0; padding: 9px 14px; font: 12px/1 var(--mono); letter-spacing: .06em; color: var(--green); background: none; border: 1px dashed var(--green-dim); border-radius: 0; cursor: pointer; transition: border-color .2s; }
+.replay:hover, .replay:focus-visible { border-color: var(--green); }
+@media (prefers-reduced-motion: reduce) { .replay { display: none; } }
 
 /* interactive surfaces */
 .card, .job, .item, .row, .certs a, .term, .school { position: relative; }
@@ -211,16 +214,84 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 .chip:hover, .course:hover { translate: 0 -2px; border-color: var(--green-dim); color: var(--green); box-shadow: 0 6px 16px #00000066; }
 .card { transform-style: preserve-3d; will-change: transform; }
 
-/* scroll reveal: items rise in as you scroll down and drop in as you scroll back up */
-.rv-on .rv { opacity: 0; translate: 0 var(--dy, 18px);
-  transition: opacity .6s ease var(--rd, 0s), translate .7s cubic-bezier(.2,.7,.2,1) var(--rd, 0s),
-              transform .25s ease, border-color .2s, color .2s, box-shadow .2s, background .2s; }
-.rv-on .rv.in { opacity: 1; translate: 0 0; }
+/* contact: "Let's work together" next to the contact list */
+.contact-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 56px; align-items: center; }
+@media (max-width: 760px) { .contact-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; } .lwt-box { order: 2; } }   /* phones: the page ends on it */
+.lwt-box { padding-block: 36px; }
+.lwt { font: 700 clamp(44px, 7vw, 74px)/.95 var(--head); text-transform: uppercase; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+.lwt .dot { color: var(--green); }
+.lwt-sub { color: var(--muted); margin: 18px 0 24px; max-width: 36ch; }
+
+/* build show: pretend AI agents build the page as you scroll (see the script for how it works) */
+html.agents-intro body::after { content: ""; position: fixed; inset: 0; background: var(--bg); z-index: 29; }
+/* no slide-in under the intro cover: the boxes are measured at exactly where things end up, and the
+   slide-in starts fresh at the paste (removing the class re-applies the animation) */
+html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue, html.agents-intro .tilt-ask { animation: none; }
+.bt:not(.built) { opacity: 0; }
+#buildLayer { position: absolute; left: 0; top: 0; width: 100%; height: 0; z-index: 6; pointer-events: none; }
+.bf { position: absolute; border: 1px solid var(--c); pointer-events: none; }
+.bf .h { position: absolute; width: 5px; height: 5px; background: var(--bg); border: 1px solid var(--c); }
+.bf .h:nth-child(1) { left: -3px; top: -3px; } .bf .h:nth-child(2) { right: -3px; top: -3px; }
+.bf .h:nth-child(3) { left: -3px; bottom: -3px; } .bf .h:nth-child(4) { right: -3px; bottom: -3px; }
+.bf .lbl { position: absolute; left: -1px; bottom: calc(100% + 3px); font: 500 10px/1.35 var(--mono); color: #050a07; background: var(--c); padding: 0 5px; white-space: nowrap; }
+.bf .lbl em { font-style: normal; opacity: .7; margin-left: 4px; }
+.bf.lr .lbl { left: auto; right: -1px; }
+.bf .lbl { transition: opacity .35s; } .bf.typing .lbl { opacity: 0; }
+.bf.img { background:
+  linear-gradient(to top right, transparent calc(50% - .7px), var(--ca) 50%, transparent calc(50% + .7px)),
+  linear-gradient(to bottom right, transparent calc(50% - .7px), var(--ca) 50%, transparent calc(50% + .7px)), #3dfc8408; }
+.bf .ico { position: absolute; left: 50%; top: 50%; width: min(30px, 55%); translate: -50% -50%; fill: none; stroke: var(--c); stroke-width: 1.5; stroke-linejoin: round; }
+.bf .car { position: absolute; top: 10%; bottom: 10%; width: 2px; margin-left: 1px; background: var(--c); animation: blink .7s steps(2) infinite; }
+.bf.skel::before { content: ""; position: absolute; inset: 26% 10%; background: linear-gradient(90deg, var(--ca) 0 40%, var(--cb) 50%, var(--ca) 60% 100%) 0 0 / 250% 100%; animation: shimmer 1.1s linear infinite; }
+@keyframes shimmer { to { background-position: -250% 0; } }
+.bf.paste { box-shadow: 0 0 0 1px var(--c), 0 0 18px var(--ca); }
+.intro { position: fixed; inset: 0; z-index: 30; pointer-events: none; transition: opacity .35s; }
+.intro::before { content: ""; position: absolute; inset: 0; transition: opacity .5s;
+  background: linear-gradient(#173022aa 1px, transparent 1px) 0 0 / 40px 40px, linear-gradient(90deg, #173022aa 1px, transparent 1px) 0 0 / 40px 40px, var(--bg); }
+.intro.out::before { opacity: 0; }
+.intro.gone { opacity: 0; }
+#agents { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+.ag { position: absolute; left: 0; top: 0; width: 16px; height: 16px; transform-origin: 0 0; will-change: transform; transition: opacity .5s; }
+.ag svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 3px #000c); }
+.ag path { fill: var(--c); stroke: #050a07; stroke-width: 1.3; stroke-linejoin: round; }
+.ag.idle { opacity: .55; }
+@media (max-width: 720px) { .ag { width: 13px; height: 13px; } }
+.abar { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 35; display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px; font: 11px/1 var(--mono); color: var(--muted); white-space: nowrap; background: #08110ce6; border: 1px solid var(--line); border-radius: 999px;
+  backdrop-filter: blur(8px); box-shadow: 0 8px 24px #0009; pointer-events: none; opacity: 0; translate: -50% 14px; transition: opacity .35s, translate .35s; }
+.abar.on { opacity: 1; translate: -50% 0; }
+.abar .ad { display: flex; gap: 3px; } .abar .ad i { width: 6px; height: 6px; border-radius: 50%; }
+.abar b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+.abar .al { font-variant-numeric: tabular-nums; color: var(--text); }
+.abar .tr { width: 44px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.abar .tr i { display: block; height: 100%; width: 100%; background: var(--green); transform-origin: left; transform: scaleX(0); transition: transform .3s; }
+.abar .st { color: var(--green); }
+.abar .st.busy::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--green); animation: blink .9s steps(2) infinite; }
+@media (max-width: 480px) { .abar { font-size: 10px; gap: 6px; padding: 6px 10px; } .abar .ad i:nth-child(n+4), .abar .lw { display: none; } .abar .tr { width: 28px; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
+<script>
+/* the build show opens with an intro screen: cover the page straight away so nothing flashes first.
+   Failsafe: the cover lifts by itself after 6s even if the main script never runs */
+(() => { try {
+  // a reload always starts the show from zero: drop any #section left over from clicking around
+  // (a first visit through a #contact link still skips the intro)
+  let reload = false;
+  try { reload = (performance.getEntriesByType("navigation")[0] || {}).type === "reload"; } catch (e) {}
+  // never restore the old scroll spot on reload, so the next reload opens at the top
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  if (reload && location.hash) {
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    scrollTo(0, 0); addEventListener("load", () => scrollTo(0, 0), { once: true });
+  }
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || (location.hash && !reload) || !("IntersectionObserver" in window)) return;
+  document.documentElement.classList.add("agents-intro");
+  setTimeout(() => document.documentElement.classList.remove("agents-intro"), 6000);
+} catch (e) {} })();
+</script>
 
 <canvas id="dots" aria-hidden="true"></canvas>
 <header class="top">
@@ -307,11 +378,14 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 
   <section id="contact">
     <h2 data-cmd="07 //">Contact</h2>
-    <div class="contact" id="contactList"></div>
+    <div class="contact-grid">
+      <div class="lwt-box" id="lwtBox"></div>
+      <div class="contact" id="contactList"></div>
+    </div>
   </section>
 </main>
 
-<footer>© Bashar Yousef</footer>
+<footer>© Bashar Yousef<button class="replay" id="replay" type="button">↻ replay the build</button></footer>
 
 <script>
 /* =====================================================================
@@ -414,6 +488,12 @@ const DATA = {
     }
   ],
   interests: ["Networking", "Cybersecurity", "Mobile development", "Databases", "Artificial intelligence", "Software development"],
+  // the big "Let's work together" block in the contact section
+  cta: {
+    title: "Let's work together",
+    text: "Have a role, a project or an idea? I'd love to hear about it.",
+    button: "Say hello"
+  },
   contact: [
     { k: "Email", v: "basharkyousef2@gmail.com", copy: true },
     { k: "LinkedIn", v: "linkedin.com/in/bashar-khaled-yousef", href: "https://www.linkedin.com/in/bashar-khaled-yousef/" },
@@ -464,6 +544,20 @@ $("#contactList").innerHTML = DATA.contact.map(c => `
   <div class="row"><span class="k">${esc(c.k)}</span>
   <span class="v">${c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.v)}</a>` : esc(c.v)}</span>
   ${c.copy ? `<button class="copy" type="button" data-v="${esc(c.v)}">copy</button>` : "<span></span>"}</div>`).join("");
+const email = (DATA.contact.find(c => /mail/i.test(c.k)) || {}).v;
+$("#lwtBox").innerHTML = `<h3 class="lwt" id="lwt">${esc(DATA.cta.title)}<span class="dot">.</span></h3>
+  <p class="lwt-sub">${esc(DATA.cta.text)}</p>
+  ${email ? `<a class="btn lwt-btn" href="mailto:${esc(email)}">${esc(DATA.cta.button)} →</a>` : ""}`;
+// "Say hello": copies the email and opens the mail app. Inside a preview frame or some in-app browsers a
+// mailto link swaps the page for a blank screen, so there it only copies
+$("#lwtBox .lwt-btn")?.addEventListener("click", e => {
+  e.preventDefault();
+  const btn = e.currentTarget;
+  navigator.clipboard?.writeText(email).catch(() => {});
+  btn.textContent = "Email copied ✓";
+  setTimeout(() => { btn.textContent = `${DATA.cta.button} →`; }, 2200);
+  if (window.top === window.self) location.href = btn.href;
+});
 document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () => {
   navigator.clipboard?.writeText(b.dataset.v).then(() => { b.textContent = "copied"; setTimeout(() => b.textContent = "copy", 1400); }, () => {
     const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); getSelection().removeAllRanges(); getSelection().addRange(r);
@@ -498,6 +592,8 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
       if (i >= word.length) { clearInterval(g._t); g.classList.remove("coding"); g.style.width = ""; g.style.transform = ""; }
     }, 55);
   };
+  // the intro "pastes" the name in: it arrives as binary and decodes
+  addEventListener("agents:pasted", () => names.forEach((g, i) => setTimeout(() => { start(g); setTimeout(() => stop(g), 420); }, 260 + i * 170)));
   if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
     names.forEach(g => {
       g.addEventListener("mouseenter", () => start(g));
@@ -511,23 +607,25 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   }
 })();
 
+/* section numbers decode from random binary digits back to their number */
+const decode = el => {
+  const word = el.textContent;
+  if (reduced || el._busy) return;
+  el._busy = true;
+  let i = 0;
+  const t = setInterval(() => {
+    i++;
+    el.textContent = [...word].map((c, k) => k < i / 2 || !/\d/.test(c) ? c : (Math.random() < .5 ? "0" : "1")).join("");
+    if (i / 2 >= word.length) { clearInterval(t); el.textContent = word; el._busy = false; }
+  }, 45);
+};
+
 /* ---------- scroll + interaction layer ---------- */
 (() => {
   const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-  // section numbers: render as real text so they can decode from binary on reveal
+  // section numbers: render as real text so they can decode from binary when built
   document.querySelectorAll("h2[data-cmd]").forEach(h => h.insertAdjacentHTML("afterbegin", `<span class="cmd">${h.dataset.cmd}</span>`));
-  const decode = el => {
-    const word = el.textContent;
-    if (reduced || el._busy) return;
-    el._busy = true;
-    let i = 0;
-    const t = setInterval(() => {
-      i++;
-      el.textContent = [...word].map((c, k) => k < i / 2 || !/\d/.test(c) ? c : (Math.random() < .5 ? "0" : "1")).join("");
-      if (i / 2 >= word.length) { clearInterval(t); el.textContent = word; el._busy = false; }
-    }, 45);
-  };
 
   // gentle 3D tilt on project cards (mouse only)
   if (fine && !reduced) document.querySelectorAll(".card").forEach(c => {
@@ -553,33 +651,6 @@ document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () =
   addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  // scroll reveal, both directions
-  if (reduced || !("IntersectionObserver" in window)) return;
-  const groups = [
-    "main section:not(.hero) h2", "#about > *", ".school", ".edu .sub", ".course", ".certs li", ".card", ".job",
-    ".two > div > .sub", ".item", ".chip", ".hint", ".term", ".row"
-  ];
-  const items = [];
-  groups.forEach(sel => document.querySelectorAll(sel).forEach(el => {
-    const sibs = [...el.parentElement.children].filter(n => n.matches(sel));
-    const step = sel === ".course" || sel === ".chip" ? .035 : .07;
-    el.style.setProperty("--rd", `${Math.min(sibs.indexOf(el), 10) * step}s`);
-    el.classList.add("rv");
-    items.push(el);
-  }));
-  document.documentElement.classList.add("rv-on");
-  const io = new IntersectionObserver(entries => entries.forEach(e => {
-    const el = e.target;
-    if (e.isIntersecting) {
-      el.classList.add("in");
-      if (el.matches("h2")) decode(el.querySelector(".cmd"));
-    } else {
-      // left above the viewport → come back down from above; left below → rise from below
-      el.style.setProperty("--dy", e.boundingClientRect.top < 0 ? "-18px" : "18px");
-      el.classList.remove("in");
-    }
-  }), { threshold: .1, rootMargin: "0px 0px -6% 0px" });
-  items.forEach(el => io.observe(el));
 })();
 
 /* background: small dots drifting slowly across a fixed layer that never scrolls */
@@ -848,6 +919,402 @@ ${DATA.certificates.map(c => `  <span class="g">›</span> ${esc(c.name)} <span 
   $("#termForm").addEventListener("submit", e => { e.preventDefault(); run(inp.value); inp.value = ""; });
   document.querySelectorAll(".hint button").forEach(b => b.addEventListener("click", () => run(b.textContent)));
   print(`<span class="m">Type 'help' to see commands.</span>`);
+})();
+/* "↻ replay the build" (footer): glide back to the top, then reload so the loading screen and
+   every agent start over from zero. A reload is far more reliable than un-building 100+ elements */
+(() => {
+  const b = $("#replay"); if (!b) return;
+  b.addEventListener("click", () => {
+    if (b.disabled) return;
+    b.disabled = true; b.textContent = "↻ restarting…";
+    let went = false;
+    const go = () => {
+      if (went) return; went = true;
+      try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+      location.reload();
+    };
+    scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    const t0 = performance.now();
+    (function wait() { scrollY < 2 || performance.now() - t0 > 900 ? setTimeout(go, 150) : requestAnimationFrame(wait); })();
+  });
+})();
+/* ---------- build show: a (pretend) swarm of AI agents builds the page as you scroll ----------
+   Nothing here changes the content: every element is already on the page, just hidden. When an
+   element scrolls into view an agent (a coloured arrow) flies over, drags a selection box around it,
+   then types the text in letter by letter, line after line (the arrow rides the typing cursor), or
+   drops an image placeholder and pastes the image in. Each element builds once; anything you scroll past unbuilt is shown finished. At the end the
+   agents circle "Let's work together". The status bar at the bottom is decoration: the numbers are
+   real counts of what has been built, the agent count is made up. Reduce-motion: page shows finished. */
+(() => {
+  const root = document.documentElement;
+  if (reduced || !("IntersectionObserver" in window) || !Element.prototype.animate) { root.classList.remove("agents-intro"); return; }
+  const small = innerWidth < 720;
+  const COLORS = ["#3dfc84", "#7dffb3", "#22c55e", "#56f09a", "#2ee68a", "#a6ffcb", "#1fb866", "#5fffa0", "#3dfc84"];   // all green, in a few shades
+  const N = small ? 6 : 9;
+  const SPEEDUP = 3;                                        // overall speed of the show: 2 = twice as fast, .5 = half speed
+  const PACE = 1.9 / SPEEDUP, INTRO_PACE = 1.4 / SPEEDUP;       // timings: 1 = original speed, bigger = slower
+  const now = () => performance.now();
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${a})`; };
+  const IMG_ICON = '<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.7"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>';
+
+  // ---- the agents: coloured arrows on a fixed layer above everything ----
+  const layer = document.createElement("div"); layer.id = "agents"; layer.setAttribute("aria-hidden", "true");
+  document.body.appendChild(layer);
+  const agents = Array.from({ length: N }, (_, i) => {
+    const el = document.createElement("div"), c = COLORS[i % COLORS.length];
+    el.className = "ag"; el.style.setProperty("--c", c);
+    el.innerHTML = '<svg viewBox="0 0 16 16"><path d="M0 0L14 5.2 7.6 7.6 5.2 14Z"/></svg>';
+    layer.appendChild(el);
+    // start just off screen around the edges, so the swarm flies in
+    const side = i % 4, r = Math.random();
+    const x = side === 0 ? -40 : side === 1 ? innerWidth + 40 : r * innerWidth;
+    const y = side === 2 ? -40 : side === 3 ? innerHeight + 40 : r * innerHeight;
+    return { el, c, i, x, y, vx: 0, vy: 0, ang: 0, job: null, tx: x, ty: y, wanderAt: 0 };
+  });
+
+  // ---- selection boxes live on a layer that scrolls with the page ----
+  const bl = document.createElement("div"); bl.id = "buildLayer"; bl.setAttribute("aria-hidden", "true");
+  document.body.appendChild(bl);
+  const frame = (parent, x, y, w, h, c, label, kind) => {
+    const f = document.createElement("div");
+    f.className = "bf" + (kind ? " " + kind : "");
+    if (label && x + label.replace(/<[^>]+>/g, "").length * 6.3 + 14 > document.documentElement.clientWidth) f.classList.add("lr");   // keep the tag on screen
+    f.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;--c:${c};--ca:${rgba(c, .2)};--cb:${rgba(c, .5)}`;
+    f.innerHTML = '<i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i>' + (label ? `<span class="lbl">${label}</span>` : "") + (kind === "img" ? IMG_ICON : "");
+    parent.appendChild(f);
+    return f;
+  };
+  const drag = (f, w, h, ms) => f.animate([{ width: "4px", height: "4px" }, { width: w + "px", height: h + "px" }], { duration: ms, easing: "cubic-bezier(.3,.7,.2,1)" });
+  const progress = an => { const p = an && an.effect.getComputedTiming().progress; return p == null ? 1 : p; };   // where an animation is right now
+  const fadeOut = (f, delay = 120) => { f.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay, fill: "forwards" }).onfinish = () => f.remove(); };
+  // keep a box glued to its element while it is being built, in case anything moves meanwhile
+  // (a web font swapping in, the iPhone tilt button appearing, text above reflowing). page = true for
+  // boxes on the scrolling build layer, false for the fixed intro overlay
+  const follow = (f, el, page) => {
+    const r = el.getBoundingClientRect(), s = f.style, x = r.left + (page ? scrollX : 0), y = r.top + (page ? scrollY : 0);
+    s.left = x + "px"; s.top = y + "px"; s.width = r.width + "px"; s.height = r.height + "px";
+    const em = f.querySelector(".lbl em"), size = `${Math.round(r.width)}×${Math.round(r.height)}`;
+    if (em && em.textContent !== size) em.textContent = size;
+  };
+  const labelFor = (el, mode, r) => {
+    if (r.width < 70 || r.width * r.height < 9000) return "";   // small things get no tag
+    const tag = el.tagName.toLowerCase(), cls = [...el.classList].find(c => c !== "bt" && c !== "built");
+    const name = tag + (cls ? "." + cls : "");
+    return mode === "type" ? name : `${name}<em>${Math.round(r.width)}×${Math.round(r.height)}</em>`;
+  };
+
+  // ---- what gets built, and how: type (text types in letter by letter), box (containers fade in,
+  //      then their contents build), img (placeholder, then the image pastes in) ----
+  const SPEC = [
+    ["main section:not(.hero) > h2", "type"],
+    ["#about .prompt", "type"], ["#about .typed", "box"], ["#about .bio", "type"], ["#about .btn", "type"],
+    ["main .sub", "type"],
+    [".school-name", "type"], [".school .deg", "type"], [".school .when", "type"], [".course", "type"],
+    [".certs li", "type"],
+    [".card", "box"], [".card .meta", "type"], [".card h3", "type"], [".card > p", "type"], [".card ul", "type"], [".tag", "type"], [".card .link", "type"], ["main .sample", "type"],
+    [".job", "box"], [".job .when", "type"], [".job h3", "type"], [".job ul", "type"],
+    [".item", "box"], [".item h3", "type"], [".item .org", "type"], [".item p", "type"],
+    [".chip", "type"],
+    ["#terminal .hint", "type"], [".term", "box"],
+    [".lwt", "type"], [".lwt-sub", "type"], [".lwt-btn", "type"],
+    [".row", "box"], [".row .k", "type"], [".row .v", "type"], [".copy", "type"],
+    ["main img", "img"]
+  ];
+  const T = new Map();
+  SPEC.forEach(([sel, mode]) => document.querySelectorAll(sel).forEach(el => {
+    if (T.has(el) || el.closest(".hero") || !el.getClientRects().length) return;
+    T.set(el, { el, mode, state: 0, seen: 0, parent: null });   // state: 0 waiting · 1 queued · 2 building · 3 showing · 4 done
+  }));
+  const list = [...T.values()].sort((a, b) => a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+  const weight = t => t.mode === "img" ? 3 : t.mode === "box" ? 2 : 1 + Math.ceil(t.el.textContent.trim().length / 40);
+  list.forEach((t, i) => {
+    t.idx = i; t.w = weight(t);
+    let p = t.el.parentElement; while (p && !T.has(p)) p = p.parentElement;   // children wait for their container
+    t.parent = p ? T.get(p) : null;
+    t.el.classList.add("bt");
+  });
+  const HERO_W = 14;
+  const totalW = HERO_W + list.reduce((s, t) => s + t.w, 0);
+  let builtW = 0, left = list.length;
+
+  // ---- status bar (fake numbers, except the layer counts) ----
+  const bar = document.createElement("div"); bar.className = "abar"; bar.setAttribute("aria-hidden", "true");
+  bar.innerHTML = `<span class="ad">${COLORS.slice(0, 5).map(c => `<i style="background:${c}"></i>`).join("")}</span><b class="an">19</b><span>agents</span><span>·</span><span class="al">0 / ${totalW}</span><span class="lw">layers</span><span class="tr"><i></i></span><span class="st"></span>`;
+  document.body.appendChild(bar);
+  const bN = bar.querySelector(".an"), bL = bar.querySelector(".al"), bP = bar.querySelector(".tr i"), bS = bar.querySelector(".st");
+  let introRunning = false, done = false, barGone = false, status = "";
+  const setStatus = s => { if (s === status) return; status = s; bS.textContent = s; bS.classList.toggle("busy", s === "building" || s === "booting"); };
+  const paintBar = () => {
+    bL.textContent = `${builtW} / ${totalW}`;
+    bP.style.transform = `scaleX(${builtW / totalW})`;
+    bar.classList.toggle("on", introRunning || (!barGone && scrollY > 40));
+  };
+  addEventListener("scroll", paintBar, { passive: true });
+  setInterval(() => { if (!done) bN.textContent = 16 + Math.floor(Math.random() * 6); }, 1400);
+  const addBuilt = t => {
+    builtW += t.w; left--;
+    paintBar();
+    if (!left && !done) {
+      done = true; builtW = totalW; paintBar(); setStatus("site built ✓"); bN.textContent = "19";
+      setTimeout(() => { barGone = true; paintBar(); }, 3200);
+    }
+  };
+
+  // ---- queue: elements on screen wait here for a free agent, in page order ----
+  const queue = [];
+  const unqueue = t => { const k = queue.indexOf(t); if (k >= 0) queue.splice(k, 1); };
+  const finish = t => { t.state = 4; t.el.classList.add("built"); io.unobserve(t.el); addBuilt(t); };
+  const instant = t => { if (t.state >= 2) return; unqueue(t); finish(t); };            // scrolled past: just show it
+  const quick = t => {                                                                  // last resort: fade in, no agent
+    if (t.state >= 2) return;
+    if (t.parent && t.parent.state < 2) quick(t.parent);
+    unqueue(t); finish(t);
+    t.el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+  };
+  const enqueue = t => { if (t.state === 0) { t.state = 1; t.seen = now(); queue.push(t); queue.sort((a, b) => a.idx - b.idx); } };
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    const t = T.get(e.target); if (!t || t.state >= 2) return;
+    if (e.isIntersecting) enqueue(t);
+    else if (e.boundingClientRect.top < 0) instant(t);                               // leaving off the top: scrolled past
+    else if (t.state === 1) { t.state = 0; unqueue(t); }                             // back off the bottom: wait for it
+  }), { threshold: .12 });
+  list.forEach(t => io.observe(t.el));
+  // safety net: every half second, anything waiting that is actually on screen (e.g. the last items at
+  // the very bottom of the page, or ones a fast scroll skipped over) joins the queue
+  setInterval(() => {
+    if (!ready) return;
+    for (const t of list) if (t.state === 0) { const r = t.el.getBoundingClientRect(); if (r.top < innerHeight - 4 && r.bottom > 4) enqueue(t); }
+  }, 500);
+
+  let ready = false, lastStart = 0;
+  const freeAgent = r => {
+    let best = null, bd = Infinity;
+    for (const a of agents) if (!a.job) { const d = Math.hypot(a.x - r.left, a.y - r.top); if (d < bd) { bd = d; best = a; } }
+    return best;
+  };
+  const schedule = tn => {
+    if (!ready) return;
+    const gap = (queue.length > 10 ? 35 : 70) * PACE;
+    for (let k = 0; k < queue.length; k++) {
+      const t = queue[k];
+      if (tn - t.seen > 20000) { quick(t); k = -1; continue; }                       // safety: never hidden forever
+      if (t.parent && t.parent.state < 3) continue;
+      if (tn - lastStart < gap) break;
+      const r = t.el.getBoundingClientRect(), a = freeAgent(r);
+      if (!a) break;
+      queue.splice(k, 1); k--; lastStart = tn;
+      build(t, a, r);
+    }
+  };
+
+  // ---- building one element ----
+  // the lines of text inside an element (relative to its box), in reading order
+  const textLines = (el, er) => {
+    const rg = document.createRange(), frags = [], walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n; (n = walk.nextNode());) {
+      if (!n.textContent.trim()) continue;
+      rg.selectNodeContents(n);
+      for (const q of rg.getClientRects()) if (q.width > .5 && q.height > .5) frags.push(q);
+    }
+    const lines = [];
+    for (const q of frags) {
+      const cy = (q.top + q.bottom) / 2, L = lines.find(l => cy > l.t && cy < l.b);
+      if (L) { L.l = Math.min(L.l, q.left); L.r = Math.max(L.r, q.right); L.t = Math.min(L.t, q.top); L.b = Math.max(L.b, q.bottom); }
+      else lines.push({ l: q.left, r: q.right, t: q.top, b: q.bottom });
+    }
+    lines.sort((x, y) => x.t - y.t);
+    return lines.map(l => ({ x0: l.l - er.left, x1: l.r - er.left, t: l.t - er.top, h: l.b - l.t, w: l.r - l.l }));
+  };
+  // typing: everything above the current line shows, the current line shows up to the cursor
+  const typers = new Set();
+  const typeStep = (ty, tn) => {
+    const p = ty.started ? Math.min(1, (tn - ty.t0) / ty.ms) : 0, shown = Math.floor(p * ty.chars) / ty.chars;
+    let d = shown * ty.tw, i = 0;
+    while (i < ty.lines.length - 1 && d > ty.lines[i].w) { d -= ty.lines[i].w; i++; }
+    const L = ty.lines[i], xc = Math.min(L.x1, L.x0 + d);
+    const top = i ? L.t : -8, bot = i < ty.lines.length - 1 ? ty.lines[i + 1].t : ty.H + 8, W = ty.W + 30;
+    ty.el.style.clipPath = `polygon(-30px -8px, ${W}px -8px, ${W}px ${top}px, ${xc}px ${top}px, ${xc}px ${bot}px, -30px ${bot}px)`;
+    ty.car.style.left = xc + "px"; ty.car.style.top = L.t + "px"; ty.car.style.height = L.h + "px";
+    ty.car.style.visibility = ty.started ? "" : "hidden";                     // the cursor appears with its arrow
+    ty.xc = xc; ty.ly = L.t + L.h * .9;
+  };
+  const arrive = (a, max) => new Promise(res => {   // wait until the agent is actually at the corner
+    const t0 = now();
+    const chk = () => { const r = a.job.rect(); Math.hypot(a.x - r.left, a.y - r.top) < 10 || now() - t0 > max ? res() : setTimeout(chk, 40); };
+    chk();
+  });
+  const build = async (t, a, r) => {
+    t.state = 2;
+    const el = t.el, s = (queue.length > 14 ? .5 : queue.length > 6 ? .72 : 1) * PACE;
+    const rect = () => el.getBoundingClientRect();
+    const job = a.job = { rect, phase: "go" };
+    a.el.classList.remove("idle");
+    await arrive(a, 1800 * s);
+
+    // drag out the selection box (positions taken now, in page coordinates); the arrow holds the corner
+    const q = rect(), x = q.left + scrollX, y = q.top + scrollY;
+    let mode = t.mode, lines = mode === "type" ? textLines(el, q) : [];
+    if (mode === "type" && !lines.length) mode = "box";
+    const f = frame(bl, x, y, q.width, q.height, a.c, labelFor(el, mode, q), mode === "img" ? "img" : "");
+    Object.assign(job, { f, el, phase: "draw", anim: drag(f, q.width, q.height, (q.width * q.height < 9000 ? 170 : 260) * s) });
+    await job.anim.finished.catch(() => {});
+    await wait(60 * s);
+
+    // fill it in
+    if (mode === "img") {
+      job.phase = "hover";
+      await wait(340 * s);                                                 // empty placeholder for a moment
+      el.classList.add("built"); t.state = 3;
+      f.querySelector(".ico")?.remove();
+      job.still = true;                                                    // the image scales in: the box stays put
+      await el.animate([{ opacity: 0, transform: "scale(1.18)", filter: "brightness(2.2)" }, { opacity: 1, transform: "none", filter: "none" }], { duration: 320 * s, easing: "cubic-bezier(.2,.8,.2,1)" }).finished.catch(() => {});
+    } else if (mode === "box") {
+      job.phase = "box";
+      el.classList.add("built"); t.state = 3;
+      await el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 280 * s }).finished.catch(() => {});
+    } else {
+      const chars = Math.max(1, el.textContent.replace(/\s+/g, " ").trim().length);
+      const car = document.createElement("i"); car.className = "car"; f.appendChild(car);
+      const ty = { el, lines, chars, car, W: q.width, H: q.height, tw: lines.reduce((n, l) => n + l.w, 0), started: false, t0: 0, ms: Math.min(1600, Math.max(240, chars * 18)) * s };
+      typeStep(ty, now());                                                 // clipped before it is ever painted
+      el.classList.add("built"); t.state = 3;
+      typers.add(ty); Object.assign(job, { phase: "type", ty });
+      f.classList.add("typing");                                           // its tag gets out of the way of the text
+      // the arrow glides to the start of the text; typing begins the moment it gets there
+      const t1 = now();
+      await new Promise(res => { const chk = () => { if (!ty.started && now() - t1 > 900 / SPEEDUP) { ty.started = true; ty.t0 = now(); } ty.started && now() - ty.t0 >= ty.ms ? res() : setTimeout(chk, 30); }; chk(); });
+      typers.delete(ty); el.style.clipPath = "";
+      if (el.matches("h2")) decode(el.querySelector(".cmd"));
+      typeStep(Object.assign(ty, { el: document.createElement("i") }), Infinity);   // caret parks at the end
+    }
+    finish(t);
+    a.job = null; a.wanderAt = 0;
+    fadeOut(f, 160);
+  };
+
+  // ---- motion: each agent springs toward a target point every frame ----
+  const lwt = $("#lwt"), lwtT = lwt && T.get(lwt);
+  let lwtSeen = false, orbitRot = 0;
+  if (lwt) new IntersectionObserver(([e]) => { lwtSeen = e.intersectionRatio > .5; }, { threshold: [0, .5, 1] }).observe(lwt);
+  const textBox = el => { const rg = document.createRange(); rg.selectNodeContents(el); return rg.getBoundingClientRect(); };
+  const steer = (a, tn, dt, orbit) => {
+    let tx, ty, K = 260, D = 30, angT;
+    const j = a.job;
+    let lock = false;
+    if (j) {
+      const r = j.rect();
+      lock = true;                                                                        // working: ride the box corner / the cursor
+      switch (j.phase) {
+        case "go": tx = r.left; ty = r.top; K = j.fast ? 130 : 40; D = j.fast ? 23 : 12; lock = false; break;
+        case "draw": { const pr = progress(j.anim); tx = r.left + 4 + (r.width - 4) * pr; ty = r.top + 4 + (r.height - 4) * pr; break; }
+        case "type": tx = r.left + j.ty.xc + 2; ty = r.top + j.ty.ly;
+          if (!j.ty.started) {                                                            // not there yet: glide to the cursor
+            lock = false; K = 160; D = 25;
+            if (Math.hypot(tx - a.x, ty - a.y) < 4) { j.ty.started = true; j.ty.t0 = tn; }
+          }
+          break;
+        case "hover": tx = r.left + r.width * .55; ty = r.top + r.height * .55; K = 120; D = 20; lock = false; break;
+        default: tx = r.right - 2; ty = r.bottom - 2;
+      }
+      if (!lock) { K *= SPEEDUP * SPEEDUP; D *= SPEEDUP; }                                // same flight path, SPEEDUP× quicker
+    } else if (orbit) {
+      const b = orbit, phi = orbitRot + a.i * 2 * Math.PI / N;
+      tx = b.cx + b.rx * Math.cos(phi); ty = b.cy + b.ry * Math.sin(phi); K = 70; D = 15;
+      angT = Math.atan2(b.ry * Math.cos(phi), -b.rx * Math.sin(phi)) + 3 * Math.PI / 4;   // point along the ring
+    } else {
+      if (tn > a.wanderAt) {                                                              // idle: drift somewhere new
+        a.tx = innerWidth * (.06 + Math.random() * .88); a.ty = innerHeight * (.14 + Math.random() * .72);
+        a.wanderAt = tn + 2500 + Math.random() * 3500;
+      }
+      tx = a.tx; ty = a.ty; K = 1.8; D = 1.9;
+    }
+    if (lock && dt > 0) {
+      const k = 1 - Math.exp(-dt / .006), nx = a.x + (tx - a.x) * k, ny = a.y + (ty - a.y) * k;   // effectively glued on
+      a.vx = (nx - a.x) / dt; a.vy = (ny - a.y) / dt; a.x = nx; a.y = ny;
+    } else {
+      // small sub-steps keep the stiff springs steady even when a slow phone drops frames
+      const n = Math.max(1, Math.ceil(dt / .008)), h = dt / n;
+      for (let st = 0; st < n; st++) {
+        a.vx += ((tx - a.x) * K - a.vx * D) * h; a.vy += ((ty - a.y) * K - a.vy * D) * h;
+        a.x += a.vx * h; a.y += a.vy * h;
+      }
+    }
+    if (angT === undefined) angT = Math.max(-.4, Math.min(.4, a.vx * .0007));
+    let da = angT - a.ang; da = Math.atan2(Math.sin(da), Math.cos(da));
+    a.ang += da * Math.min(1, dt * 9);
+    a.el.style.transform = `translate3d(${a.x.toFixed(1)}px,${a.y.toFixed(1)}px,0) rotate(${a.ang.toFixed(3)}rad)`;
+    const idle = !j && !orbit;
+    if (idle !== a.el.classList.contains("idle")) a.el.classList.toggle("idle", idle);
+  };
+  let last = now();
+  (function loop(tn) {
+    tn = tn || now();
+    const dt = Math.min(tn - last, 50) / 1000; last = tn;
+    if (!document.hidden) {
+      schedule(tn);
+      for (const ty of typers) typeStep(ty, tn);
+      for (const a of agents) if (a.job && a.job.f && !a.job.still) follow(a.job.f, a.job.el, !a.job.intro);
+      if (ready && !introRunning) setStatus(done ? "site built ✓" : agents.some(a => a.job) || queue.length ? "building" : "scroll ↓");
+      let orbit = null;
+      if (lwtSeen && lwtT && lwtT.state >= 3) {                                           // the finale: circle "Let's work together"
+        const b = textBox(lwt);
+        orbit = { cx: b.left + b.width / 2, cy: b.top + b.height / 2, rx: Math.min(b.width / 2 + 44, innerWidth / 2 - 12), ry: b.height / 2 + 36 };
+        orbitRot += dt * .55;
+      }
+      for (const a of agents) steer(a, tn, dt, orbit);
+    }
+    requestAnimationFrame(loop);
+  })();
+
+  // ---- intro: wireframe of the first screen, then the real thing gets pasted in ----
+  const intro = async () => {
+    introRunning = true; setStatus("booting"); paintBar();
+    const ov = document.createElement("div"); ov.className = "intro"; ov.setAttribute("aria-hidden", "true");
+    document.body.appendChild(ov);
+    let skip = false;
+    const onSkip = () => { skip = true; };
+    ["pointerdown", "keydown", "wheel", "touchstart"].forEach(ev => addEventListener(ev, onSkip, { once: true, passive: true }));
+    const pieces = [[".top .logo", "a.logo"], [".top nav", "nav"], ["#portrait", "img.portrait", "img"], [".hero h1", "h1"], [".cue", "a.cue"]]
+      .map(([sel, label, kind]) => { const el = $(sel); return el && el.getBoundingClientRect().width > 0 ? { el, label, kind } : null; })
+      .filter(Boolean);
+    const frames = [];
+    // every intro box tracks its element live until the paste (the layout under the cover is final,
+    // but the iPhone tilt button or a late web font can still move things)
+    let following = true;
+    (function track() { if (!following) return; frames.forEach(([f, el]) => follow(f, el, false)); requestAnimationFrame(track); })();
+    for (let i = 0; i < pieces.length && !skip; i++) {
+      const pc = pieces[i], rect = () => pc.el.getBoundingClientRect(), a = freeAgent(rect()) || agents[i % N];   // the closest free arrow takes it
+      const job = a.job = { rect, phase: "go", fast: true, intro: true };
+      await wait((i ? 120 : 200) * INTRO_PACE);
+      await arrive(a, 420 * INTRO_PACE);
+      if (skip) break;
+      const r = rect();
+      const label = pc.kind ? `${pc.label}<em>${Math.round(r.width)}×${Math.round(r.height)}</em>` : pc.label;
+      const f = frame(ov, r.left, r.top, r.width, r.height, a.c, label, pc.kind || "skel");
+      Object.assign(job, { phase: "draw", anim: drag(f, r.width, r.height, 260 * INTRO_PACE) });
+      job.anim.finished.then(() => { if (a.job === job) job.phase = "hover"; }, () => {});
+      frames.push([f, pc.el]);
+      builtW = Math.round(HERO_W * (i + 1) / pieces.length); paintBar();
+    }
+    if (!skip) await wait(520 * INTRO_PACE);
+    // paste: the real first screen slides in under the boxes, the boxes flash and go (they stay where
+    // the content lands rather than riding the slide)
+    following = false;
+    builtW = HERO_W; paintBar();
+    frames.forEach(([f]) => f.classList.add("paste"));
+    ov.classList.add("out");
+    root.classList.remove("agents-intro");
+    dispatchEvent(new Event("agents:pasted"));
+    agents.forEach(a => { a.job = null; a.wanderAt = 0; });
+    await wait(skip ? 200 : 520 * INTRO_PACE);
+    ov.classList.add("gone");
+    introRunning = false; ready = true; paintBar();
+    await wait(400);
+    ov.remove();
+  };
+  if (root.classList.contains("agents-intro")) intro();
+  else { ready = true; builtW = HERO_W; paintBar(); }
 })();
 </script>
 </body>
