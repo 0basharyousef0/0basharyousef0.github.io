@@ -223,6 +223,26 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }
 .chip { font-family: var(--mono); font-size: 14px; padding: 8px 14px; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s, color .2s; }
 .chip:hover { border-color: var(--green); color: var(--green); }
+/* interests mind map: "Interests" in the middle, a straight branch out to each interest, and fainter
+   links between neighbouring interests */
+.mindmap { position: relative; height: 520px; touch-action: pan-y; }
+.mm-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.mm-lines path { fill: none; stroke: var(--green-dim); stroke-width: 1.3; opacity: .5; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s ease, opacity .3s, stroke .3s, stroke-width .3s; }
+.mm-lines path.ln { stroke-width: 1; opacity: .26; }
+.mm-lines path.on { stroke-dashoffset: 0; }   /* a line draws itself once the interests it joins are built */
+.mm-node { position: absolute; left: 0; top: 0; z-index: 1; width: 118px; height: 118px; padding: 10px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+  font: 12.5px/1.25 var(--mono); border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: default;
+  user-select: none; -webkit-user-select: none; will-change: translate; transition: opacity .3s, border-color .25s, color .25s, box-shadow .25s, scale .25s; }
+.mm-core { z-index: 2; width: 132px; height: 132px; font: 700 19px/1 var(--head); border-color: var(--green); color: var(--green); background: #0b1a11;
+  box-shadow: 0 0 0 6px #3dfc8412, 0 0 34px #3dfc8433; }
+/* only the centre reacts: hovering (tapping on phones) "Interests" lights up the whole map */
+.mm-core { transition: scale .3s, box-shadow .3s; }
+.mindmap.lit .mm-core { scale: 1.05; box-shadow: 0 0 0 8px #3dfc841c, 0 0 48px #3dfc8466; }
+.mindmap.lit .mm-lines path.br { stroke: var(--green); opacity: .95; stroke-width: 1.8; }
+.mindmap.lit .mm-lines path.ln { opacity: .6; }
+.mindmap.lit .mm-node:not(.mm-core) { border-color: var(--green-dim); }
+@media (max-width: 720px) { #interests { padding-block: 36px; } }
+@media (max-width: 560px) { .mm-node { width: 96px; height: 96px; padding: 6px; font-size: 11px; } .mm-core { width: 106px; height: 106px; font-size: 15px; } }
 
 /* terminal */
 .term { border: 1px solid var(--line); background: #030705; font-family: var(--mono); font-size: 14px; }
@@ -417,9 +437,8 @@ html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue
     </div>
   </section>
 
-  <section id="interests">
-    <h2 data-cmd="05 //">Interests</h2>
-    <div class="chips" id="chipList"></div>
+  <section id="interests" aria-label="Interests">
+    <div class="mindmap" id="mindmap" role="list" aria-label="Interests"><svg class="mm-lines" aria-hidden="true"></svg></div>
   </section>
 
   <section id="terminal">
@@ -555,7 +574,7 @@ const DATA = {
       text: "Volunteered as a teaching assistant, mentoring 18 students in Python and Scratch. Led small-group debugging sessions, teaching students to break problems into steps and work through errors on their own, and helped them turn their ideas into working projects."
     }
   ],
-  interests: ["Networking", "Cybersecurity", "Mobile development", "Databases", "Artificial intelligence", "Software development", "Tech and business"],
+  interests: ["Networking", "Cybersecurity", "Mobile development", "Databases", "Artificial intelligence", "Software development", "Business", "Management"],
   // the big "Let's work together" block in the contact section
   cta: {
     title: "Let's work together",
@@ -607,7 +626,6 @@ $("#expList").innerHTML = DATA.experience.map(e => `
 const items = list => list.map(i => `<div class="item${i.logo ? " has-logo" : ""}">${i.logo ? `<img class="item-logo" src="${esc(i.logo)}" alt="" width="160" height="160">` : ""}<div>${sample(i)}<h3>${esc(i.title)}</h3><div class="org">${esc(i.org)}${i.when ? `<span>${esc(i.when)}</span>` : ""}</div><p>${esc(i.text)}</p></div></div>`).join("");
 $("#leadList").innerHTML = items(DATA.leadership);
 $("#volList").innerHTML = items(DATA.volunteering);
-$("#chipList").innerHTML = DATA.interests.map(i => `<span class="chip">${esc(i)}</span>`).join("");
 
 $("#contactList").innerHTML = DATA.contact.map(c => `
   <div class="row"><span class="k">${esc(c.k)}</span>
@@ -752,6 +770,69 @@ const decode = el => {
     scrollTo({ top: Math.max(0, target), behavior: reduced ? "auto" : "smooth" });
     lockUntil = now + 700;
   }, { passive: false });
+})();
+
+/* interests mind map. Each interest hangs off "Interests" on a curved branch, with fainter links between
+   neighbours, all straight lines. The circles drift gently on their own; only "Interests" reacts: hovering
+   it (tapping on phones) lights up the whole map. The animation only runs while the section is on screen */
+(() => {
+  const box = $("#mindmap"); if (!box) return;
+  const svg = box.querySelector(".mm-lines");
+  box.insertAdjacentHTML("beforeend", `<span class="mm-node mm-core" role="listitem">Interests</span>` +
+    DATA.interests.map(t => `<span class="mm-node" role="listitem">${esc(t)}</span>`).join(""));
+  const core = box.querySelector(".mm-core"), nodes = [...box.querySelectorAll(".mm-node:not(.mm-core)")], n = nodes.length;
+  const ties = n > 2 ? nodes.map((_, i) => [i, (i + 1) % n]) : [];        // neighbours around the map
+  svg.innerHTML = nodes.map(() => '<path class="br" pathLength="1"/>').join("") + ties.map(() => '<path class="ln" pathLength="1"/>').join("");
+  const branches = [...svg.querySelectorAll(".br")], links = [...svg.querySelectorAll(".ln")];
+  const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const wob = nodes.map(() => [Math.random() * 6.28, Math.random() * 6.28, .35 + Math.random() * .3, .3 + Math.random() * .3]);
+  let W = 0, H = 0, base = [], size = [];
+  const layout = () => {
+    W = box.clientWidth; H = box.clientHeight;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const small = W < 560, edge = small ? 4 : 24;
+    size = nodes.map(nd => [nd.offsetWidth, nd.offsetHeight]);
+    let spots;
+    if (small) {
+      // phones are narrow: two branches, interests stacked down each side, rows kept clear of the centre
+      const col = k => Array.from({ length: k }, (_, j) => { let y = k === 1 ? .3 : .07 + j * .86 / (k - 1);
+        if (Math.abs(y - .5) < .17) y = y < .5 || (y === .5 && j % 2 === 0) ? .33 : .67; return y; });
+      const right = Math.ceil(n / 2), rY = col(right), lY = col(n - right).reverse();
+      spots = nodes.map((_, i) => i < right ? [W * .78, H * rY[i]] : [W * .22, H * lY[i - right]]);
+    } else {
+      const rx = Math.min(W * .37, 340), ry = H * .36;
+      spots = nodes.map((_, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return [W / 2 + rx * Math.cos(a), H / 2 + ry * Math.sin(a)]; });
+    }
+    base = spots.map(([x, y], i) => { const [w, h] = size[i];
+      return [Math.min(W - edge - w / 2, Math.max(edge + w / 2, x)), Math.min(H - edge - h / 2, Math.max(edge + h / 2, y))]; });
+  };
+  if (fine) { core.addEventListener("pointerenter", () => box.classList.add("lit")); core.addEventListener("pointerleave", () => box.classList.remove("lit")); }
+  else core.addEventListener("click", () => box.classList.toggle("lit"));
+  const line = (x1, y1, x2, y2) => `M${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  const place = tn => {
+    const t = tn / 1000, still = reduced, cx = W / 2 + (still ? 0 : 3 * Math.sin(t * .5)), cy = H / 2 + (still ? 0 : 3 * Math.cos(t * .4));
+    core.style.translate = `${(cx - core.offsetWidth / 2).toFixed(1)}px ${(cy - core.offsetHeight / 2).toFixed(1)}px`;   // `translate`, not `transform`: the hover zoom then stays centred
+    const amp = W < 560 ? 4 : 7;
+    const pos = nodes.map((nd, i) => {
+      const [p1, p2, w1, w2] = wob[i];
+      const x = base[i][0] + (still ? 0 : amp * Math.sin(t * w1 + p1)), y = base[i][1] + (still ? 0 : amp * Math.cos(t * w2 + p2));
+      nd.style.translate = `${(x - size[i][0] / 2).toFixed(1)}px ${(y - size[i][1] / 2).toFixed(1)}px`;
+      branches[i].setAttribute("d", line(cx, cy, x, y));
+      if (!branches[i].classList.contains("on") && nd.classList.contains("built")) branches[i].classList.add("on");
+      return [x, y];
+    });
+    ties.forEach(([a, b], k) => {
+      const [x1, y1] = pos[a], [x2, y2] = pos[b];
+      links[k].setAttribute("d", line(x1, y1, x2, y2));
+      if (!links[k].classList.contains("on") && nodes[a].classList.contains("built") && nodes[b].classList.contains("built")) links[k].classList.add("on");
+    });
+  };
+  layout(); place(0);
+  addEventListener("resize", () => { layout(); place(performance.now()); });
+  if (document.fonts) document.fonts.ready.then(() => { layout(); place(performance.now()); });
+  let seen = false;
+  new IntersectionObserver(([e]) => { seen = e.isIntersecting; }, { rootMargin: "120px 0px" }).observe(box);
+  (function loop(tn) { if (seen && !document.hidden) place(tn); requestAnimationFrame(loop); })(performance.now());
 })();
 
 /* background: small dots drifting slowly across a fixed layer that never scrolls */
@@ -1116,7 +1197,7 @@ ${DATA.certificates.map(c => `  <span class="g">›</span> ${esc(c.name)} <span 
     [".card", "box"], [".card .meta", "type"], [".card h3", "type"], [".card > p", "type"], [".card ul", "type"], [".tag", "type"], [".card .link", "type"], ["main .sample", "type"],
     [".job", "box"], [".job .when", "type"], [".job h3", "type"], [".job ul", "type"],
     [".item", "box"], [".item h3", "type"], [".item .org", "type"], [".item p", "type"],
-    [".chip", "type"],
+    [".chip", "type"], ["#mindmap .mm-node", "type"],
     ["#terminal .hint", "type"], [".term", "box"],
     [".lwt", "type"], [".lwt-sub", "type"], [".lwt-btn", "type"],
     [".row", "box"], [".row .k", "type"], [".row .v", "type"], [".copy", "type"],
