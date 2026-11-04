@@ -26,7 +26,9 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+/* reel-style scrolling: every section fills the screen and the page snaps from one to the next, one per
+   swipe or wheel flick. Sections taller than the screen scroll normally inside, then snap on to the next */
+html { scroll-behavior: smooth; scroll-padding-top: var(--top-h); scroll-snap-type: y mandatory; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--body); }
 ::selection { background: var(--green); color: var(--bg); }
 a { color: var(--green); text-decoration: none; }
@@ -50,7 +52,9 @@ a:hover { text-decoration: underline; }
 #dots { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 main, footer { position: relative; z-index: 1; }
 main { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 0 64px; }
-section { padding-block: 72px 0; }
+section { min-height: calc(100vh - var(--top-h)); min-height: calc(100svh - var(--top-h)); padding-block: 64px;
+  display: flex; flex-direction: column; justify-content: center; scroll-snap-align: start; scroll-snap-stop: always; }
+footer { scroll-snap-align: end; }
 
 /* hero */
 .hero { min-height: calc(100svh - var(--top-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-block: 4px 70px; position: relative; }
@@ -80,7 +84,31 @@ section { padding-block: 72px 0; }
   mask-image: radial-gradient(ellipse at 50% 45%, #000 0%, transparent 65%); -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 0%, transparent 65%); }
 .prompt { font-family: var(--mono); font-size: 14px; color: var(--green-dim); }
 .hero h1 { font: 700 clamp(40px, 7.5vw, 84px)/1 var(--head); margin: 22px 0 0; letter-spacing: -.01em; }
-.about { display: grid; justify-items: start; }
+.about { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 48px; overflow-x: clip; }   /* the turning outline's box must never make the page scroll sideways */
+.about-text { display: grid; justify-items: start; min-width: 0; }
+/* looping clip in a round frame whose edge fades into the page */
+.about-video { position: relative; isolation: isolate; width: clamp(240px, 34vw, 380px); aspect-ratio: 1; }
+.about-video::before { content: ""; position: absolute; inset: 12%; z-index: -1; border-radius: 50%; background: radial-gradient(circle, #3dfc8426, transparent 70%); filter: blur(30px); }
+/* the clip sits in a soft blob that slowly changes shape, with a thin outline in a different blob shape
+   on top that drifts out of step with it (inspired by "organic shape + offset line" layouts) */
+.about-loop { display: block; width: 100%; height: 100%; object-fit: cover;
+  border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; animation: blobFill 14s ease-in-out infinite alternate; }
+.blob-line { position: absolute; inset: 1%; z-index: 1; pointer-events: none; translate: 4% -3%;
+  border: 2px solid #3dfc84d9; border-radius: 62% 38% 35% 65% / 52% 64% 36% 48%;
+  animation: blobLine 10s ease-in-out infinite alternate, blobTurn 40s linear infinite; transition: opacity .6s; }
+.about-video:has(.about-loop:not(.built)) .blob-line { opacity: 0; }   /* the outline arrives with the clip */
+@keyframes blobFill {
+  0%   { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; }
+  25%  { border-radius: 70% 30% 46% 54% / 30% 39% 61% 70%; }
+  50%  { border-radius: 50% 50% 34% 66% / 56% 68% 32% 44%; }
+  75%  { border-radius: 33% 67% 58% 42% / 63% 40% 60% 37%; }
+  100% { border-radius: 61% 39% 40% 60% / 38% 62% 38% 62%; } }
+@keyframes blobLine {
+  0%   { border-radius: 62% 38% 35% 65% / 52% 64% 36% 48%; }
+  50%  { border-radius: 38% 62% 63% 37% / 70% 33% 67% 30%; }
+  100% { border-radius: 54% 46% 44% 56% / 34% 58% 42% 66%; } }
+@keyframes blobTurn { to { rotate: 360deg; } }
+@media (max-width: 760px) { .about { grid-template-columns: minmax(0, 1fr); gap: 4px; } .about-video { justify-self: center; width: min(80vw, 320px); margin-top: 34px; }   /* phones: under the text */ }
 .about .bio { margin-bottom: 26px; }
 .hero h1 .last { color: var(--green); }
 .tilt-ask { margin-top: 16px; padding: 8px 14px; font: 12px/1 var(--mono); letter-spacing: .06em; color: var(--green); background: none; border: 1px dashed var(--green-dim); border-radius: 0; cursor: pointer; animation: heroIn .8s .5s both; }
@@ -126,6 +154,18 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .certs li:last-child { border-bottom: 1px solid var(--line); }
 .certs b { display: block; font-weight: 600; }
 .certs span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+/* campus photo beside the school name, above the certificates: no frame, every edge fades into the page, toned down so it sits
+   behind the text rather than competing with it; it comes up a little on hover */
+.campus { margin: -18px 0 14px; }   /* pulled up level with the "Western University" title */
+.campus img { display: block; width: 100%; height: auto; opacity: .7; filter: saturate(.85);
+  /* feather all four sides to fully transparent: a left-right fade intersected with a top-bottom fade */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent), linear-gradient(transparent, #000 24%, #000 72%, transparent);
+  -webkit-mask-composite: source-in;
+          mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent), linear-gradient(transparent, #000 24%, #000 72%, transparent);
+          mask-composite: intersect;
+  transition: opacity .4s, filter .4s; }
+.campus:hover img { opacity: .9; filter: saturate(1); }
+
 
 /* projects */
 .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -332,12 +372,21 @@ html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue
   </section>
 
   <section id="about" class="about">
-    <div class="prompt">&gt; whoami</div>
-    <div class="typed" aria-live="polite"><span class="sizer" id="typedSizer" aria-hidden="true"></span><span><span id="typed"></span><span class="caret"></span></span></div>
-    <p class="bio">Student leader at Western University, curious about how systems work under the hood. I'm exploring networking, cybersecurity, data science and software development, digging into databases and the systems built on top of them, and learning the business side that ties it all together.</p>
-    <div class="cta">
-      <a class="btn" href="#projects">View projects</a>
-      <a class="btn alt" href="#contact">Get in touch</a>
+    <div class="about-text">
+      <div class="prompt">&gt; whoami</div>
+      <div class="typed" aria-live="polite"><span class="sizer" id="typedSizer" aria-hidden="true"></span><span><span id="typed"></span><span class="caret"></span></span></div>
+      <p class="bio">Student leader at Western University, curious about how systems work under the hood. I'm exploring networking, cybersecurity, data science and software development, digging into databases and the systems built on top of them, and learning the business side that ties it all together.</p>
+      <div class="cta">
+        <a class="btn" href="#projects">View projects</a>
+        <a class="btn alt" href="#contact">Get in touch</a>
+      </div>
+    </div>
+    <div class="about-video" aria-hidden="true">
+      <video class="about-loop" autoplay muted loop playsinline disablepictureinpicture preload="auto" poster="bashar-loop.jpg" width="720" height="720" tabindex="-1">
+        <source src="bashar-loop.mp4" type="video/mp4">
+        <source src="bashar-loop.webm" type="video/webm">
+      </video>
+      <span class="blob-line"></span>
     </div>
   </section>
 
@@ -345,7 +394,8 @@ html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue
     <h2 data-cmd="01 //">Education &amp; certificates</h2>
     <div class="edu">
       <div class="school" id="school"></div>
-      <div><p class="sub">Certificates</p><ul class="certs" id="certList"></ul></div>
+      <div><figure class="campus"><img src="western-campus.webp" alt="Middlesex College at Western University, framed by trees in bloom" width="440" height="250" decoding="async"></figure>
+        <p class="sub">Certificates</p><ul class="certs" id="certList"></ul></div>
     </div>
   </section>
 
@@ -524,6 +574,7 @@ const DATA = {
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (reduced) { const v = document.querySelector(".about-loop"); if (v) { v.removeAttribute("autoplay"); v.pause(); } }
 const sample = x => x.sample ? '<span class="sample">SAMPLE</span>' : "";
 
 const ed = DATA.education;
@@ -669,6 +720,38 @@ const decode = el => {
   addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
+})();
+
+/* reel-style paging for mouse wheels and trackpads: one flick moves exactly one section, like swiping
+   reels. (Touch screens get the same from CSS scroll snapping plus the finger's own momentum.) Inside a
+   section taller than the screen the wheel scrolls normally until its end, then the next flick moves on */
+(() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  const pages = () => [...document.querySelectorAll("main > section, footer")];
+  const padTop = () => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  let lockUntil = 0, lastWheel = 0;
+  addEventListener("wheel", e => {
+    if (e.ctrlKey || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;           // pinch-zoom or sideways
+    const dir = Math.sign(e.deltaY);
+    const box = e.target.closest && e.target.closest(".term-out");               // the terminal scrolls itself while it can
+    if (box && (dir > 0 ? box.scrollTop + box.clientHeight < box.scrollHeight - 1 : box.scrollTop > 0)) return;
+    const now = performance.now(), gap = now - lastWheel; lastWheel = now;
+    if (now < lockUntil) { e.preventDefault(); if (gap < 160) lockUntil = Math.max(lockUntil, now + 160); return; }  // swallow trackpad momentum
+    const top = padTop(), vh = innerHeight, list = pages();
+    const cur = list.find(s => { const r = s.getBoundingClientRect(); return r.top <= top + 2 && r.bottom > top + 2; }) || list[0];
+    const r = cur.getBoundingClientRect();
+    if (dir > 0 && r.bottom > vh + 2) return;                                     // more of this section below: read on
+    if (dir < 0 && r.top < top - 2) return;                                       // more of it above: read on
+    const next = list[list.indexOf(cur) + dir];
+    if (!next) return;
+    e.preventDefault();
+    const nr = next.getBoundingClientRect();
+    let target = scrollY + nr.top - top;
+    if (dir < 0 && nr.height > vh - top) target = scrollY + nr.bottom - vh;       // back up into a tall section: land on its end
+    if (next.tagName === "FOOTER") target = document.documentElement.scrollHeight - vh;
+    scrollTo({ top: Math.max(0, target), behavior: reduced ? "auto" : "smooth" });
+    lockUntil = now + 700;
+  }, { passive: false });
 })();
 
 /* background: small dots drifting slowly across a fixed layer that never scrolls */
@@ -1037,7 +1120,7 @@ ${DATA.certificates.map(c => `  <span class="g">›</span> ${esc(c.name)} <span 
     ["#terminal .hint", "type"], [".term", "box"],
     [".lwt", "type"], [".lwt-sub", "type"], [".lwt-btn", "type"],
     [".row", "box"], [".row .k", "type"], [".row .v", "type"], [".copy", "type"],
-    ["main img", "img"]
+    ["main img", "img"], ["main video", "img"]
   ];
   const T = new Map();
   SPEC.forEach(([sel, mode]) => document.querySelectorAll(sel).forEach(el => {
