@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: one calm reading column; terminal-green used only for accents, links and the interactive shell. Single dark theme by choice. */
+/* Layout: one calm reading column; terminal-green used only for accents and links. Single dark theme by choice. */
 :root {
   --bg: #050a07;
   --surface: #0a140e;
@@ -244,19 +244,6 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 @media (max-width: 720px) { #interests { padding-block: 36px; } }
 @media (max-width: 560px) { .mm-node { width: 96px; height: 96px; padding: 6px; font-size: 11px; } .mm-core { width: 106px; height: 106px; font-size: 15px; } }
 
-/* terminal */
-.term { border: 1px solid var(--line); background: #030705; font-family: var(--mono); font-size: 14px; }
-.term-bar { padding: 8px 14px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; display: flex; gap: 6px; align-items: center; }
-.term-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
-.term-bar span { margin-left: 8px; }
-.term-out { height: 240px; overflow-y: auto; padding: 14px; white-space: pre-wrap; word-break: break-word; }
-.term-out .g { color: var(--green); } .term-out .m { color: var(--muted); } .term-out .e { color: #ff6b78; }
-.term-in { display: flex; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); }
-.term-in label { color: var(--green); white-space: nowrap; }
-.term-in input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text); font: inherit; caret-color: var(--green); }
-.hint { font-family: var(--mono); font-size: 13px; color: var(--muted); margin: 0 0 14px; }
-.hint button { font: inherit; background: none; border: 1px solid var(--line); color: var(--green); padding: 1px 8px; cursor: pointer; margin: 2px; }
-.hint button:hover { border-color: var(--green); }
 
 /* contact */
 .contact { max-width: 620px; }
@@ -273,7 +260,7 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 @media (prefers-reduced-motion: reduce) { .replay { display: none; } }
 
 /* interactive surfaces */
-.card, .job, .item, .row, .certs a, .term, .school { position: relative; }
+.card, .job, .item, .row, .certs a, .school { position: relative; }
 .job .when, .item h3, .row .k { transition: color .25s; }
 .job:hover .when, .row:hover .k { color: var(--green); }
 .item:hover h3, .job:hover h3 { color: #fff; }
@@ -441,21 +428,8 @@ html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue
     <div class="mindmap" id="mindmap" role="list" aria-label="Interests"><svg class="mm-lines" aria-hidden="true"></svg></div>
   </section>
 
-  <section id="terminal">
-    <h2 data-cmd="06 //">Terminal</h2>
-    <p class="hint">Prefer the command line? Try <button type="button">help</button><button type="button">whoami</button><button type="button">projects</button></p>
-    <div class="term">
-      <div class="term-bar"><i></i><i></i><i></i><span>guest@bashar ~</span></div>
-      <div class="term-out" id="termOut" aria-live="polite"></div>
-      <form class="term-in" id="termForm" autocomplete="off">
-        <label for="termIn">$</label>
-        <input id="termIn" type="text" spellcheck="false" autocapitalize="off" aria-label="Terminal command">
-      </form>
-    </div>
-  </section>
-
   <section id="contact">
-    <h2 data-cmd="07 //">Contact</h2>
+    <h2 data-cmd="05 //">Contact</h2>
     <div class="contact-grid">
       <div class="lwt-box" id="lwtBox"></div>
       <div class="contact" id="contactList"></div>
@@ -751,8 +725,6 @@ const decode = el => {
   addEventListener("wheel", e => {
     if (e.ctrlKey || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;           // pinch-zoom or sideways
     const dir = Math.sign(e.deltaY);
-    const box = e.target.closest && e.target.closest(".term-out");               // the terminal scrolls itself while it can
-    if (box && (dir > 0 ? box.scrollTop + box.clientHeight < box.scrollHeight - 1 : box.scrollTop > 0)) return;
     const now = performance.now(), gap = now - lastWheel; lastWheel = now;
     if (now < lockUntil) { e.preventDefault(); if (gap < 160) lockUntil = Math.max(lockUntil, now + 160); return; }  // swallow trackpad momentum
     const top = padTop(), vh = innerHeight, list = pages();
@@ -1058,50 +1030,6 @@ const decode = el => {
   })();
 })();
 
-/* terminal */
-(() => {
-  const out = $("#termOut"), inp = $("#termIn");
-  const print = html => { const d = document.createElement("div"); d.innerHTML = html; out.appendChild(d); out.scrollTop = out.scrollHeight; };
-  const CMDS = {
-    help: () => `<span class="g">commands</span>
-  whoami      about me
-  education   school, courses and certificates
-  projects    list projects
-  experience  list experience
-  interests   what I'm into
-  contact     how to reach me
-  goto &lt;x&gt;    jump to a section
-  clear       clear the screen`,
-    whoami: () => "Bashar Yousef. Student leader at Western University, exploring networking, cybersecurity, data science and software development, and how they connect to business.",
-    education: () => `<span class="g">${esc(ed.school)}</span> · ${esc(ed.degree)}
-<span class="m">${esc(ed.when)}</span>
-courses: ${ed.courses.map(esc).join(", ")}
-certificates:
-${DATA.certificates.map(c => `  <span class="g">›</span> ${esc(c.name)} <span class="m">(${esc(c.issuer)})</span>`).join("\n")}`,
-    projects: () => DATA.projects.map(p => `<span class="g">›</span> ${esc(p.title)} <span class="m">· ${esc(p.meta)}</span>`).join("\n"),
-    experience: () => DATA.experience.map(e => `<span class="g">${esc(e.when)}</span>  ${esc(e.role)} · ${esc(e.org)}`).join("\n"),
-    interests: () => DATA.interests.map(esc).join(" · "),
-    contact: () => DATA.contact.map(c => `${c.k.padEnd(9)} ${esc(c.v)}`).join("\n"),
-    "sudo hire bashar": () => `<span class="g">Access granted.</span> Great choice. See the contact section below.`,
-    clear: () => { out.innerHTML = ""; return null; }
-  };
-  function run(raw) {
-    const cmd = raw.trim(); if (!cmd) return;
-    print(`<span class="g">$</span> ${esc(cmd)}`);
-    const lc = cmd.toLowerCase();
-    let res;
-    if (lc.startsWith("goto ")) {
-      const id = lc.slice(5).trim(), el = document.getElementById(id);
-      if (el) { el.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }); res = `<span class="m">jumping to ${esc(id)}…</span>`; }
-      else res = `<span class="e">no section named</span> ${esc(id)}`;
-    } else if (CMDS[lc]) res = CMDS[lc]();
-    else res = `<span class="e">command not found:</span> ${esc(cmd)} <span class="m">(try help)</span>`;
-    if (res !== null) print(res);
-  }
-  $("#termForm").addEventListener("submit", e => { e.preventDefault(); run(inp.value); inp.value = ""; });
-  document.querySelectorAll(".hint button").forEach(b => b.addEventListener("click", () => run(b.textContent)));
-  print(`<span class="m">Type 'help' to see commands.</span>`);
-})();
 /* "↻ replay the build" (footer): glide back to the top, then reload so the loading screen and
    every agent start over from zero. A reload is far more reliable than un-building 100+ elements */
 (() => {
@@ -1198,7 +1126,6 @@ ${DATA.certificates.map(c => `  <span class="g">›</span> ${esc(c.name)} <span 
     [".job", "box"], [".job .when", "type"], [".job h3", "type"], [".job ul", "type"],
     [".item", "box"], [".item h3", "type"], [".item .org", "type"], [".item p", "type"],
     [".chip", "type"], ["#mindmap .mm-node", "type"],
-    ["#terminal .hint", "type"], [".term", "box"],
     [".lwt", "type"], [".lwt-sub", "type"], [".lwt-btn", "type"],
     [".row", "box"], [".row .k", "type"], [".row .v", "type"], [".copy", "type"],
     ["main img", "img"], ["main video", "img"]
