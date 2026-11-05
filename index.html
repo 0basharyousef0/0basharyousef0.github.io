@@ -261,14 +261,25 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 @media (max-width: 560px) { .mm-node { width: 96px; height: 96px; padding: 6px; font-size: 11px; } .mm-core { width: 106px; height: 106px; font-size: 15px; } }
 
 
-/* contact */
-.contact { max-width: 620px; }
-.row { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
-.row:last-child { border-bottom: 1px solid var(--line); }
-.row .k { font-family: var(--mono); font-size: 13px; color: var(--muted); }
-.row .v { overflow-wrap: anywhere; }
-.copy { font-family: var(--mono); font-size: 12px; background: none; border: 1px solid var(--line); color: var(--muted); padding: 2px 10px; cursor: pointer; }
-.copy:hover { color: var(--green); border-color: var(--green); }
+/* contact: four big logos in a 2×2 grid, no boxes or labels. Email copies, LinkedIn/GitHub open,
+   the pin shows where on hover/tap; a small bubble gives the only words ("Copied ✓", the location) */
+.contact { display: grid; grid-template-columns: repeat(2, 120px); justify-content: center; gap: 34px 56px; }
+.ct { position: relative; display: grid; place-items: center; width: 120px; height: 120px; margin: 0; padding: 0; border: 0; border-radius: 24px;
+  background: none; color: var(--text); font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ct:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+.ct-ico { display: block; width: 92px; height: 92px; color: var(--text); transition: scale .25s, filter .25s, translate .25s; }
+.ct-ico svg { display: block; width: 100%; height: 100%; }
+.ct:hover .ct-ico, .ct:focus-visible .ct-ico { scale: 1.1; translate: 0 -3px; filter: drop-shadow(0 8px 18px #0009) drop-shadow(0 0 16px #3dfc8440); }
+.ct-static { cursor: default; }
+.ct-tip { --tx: -50%; position: absolute; left: 50%; top: calc(100% + 4px); z-index: 3; translate: var(--tx) 6px; width: max-content; max-width: 168px; text-align: center; pointer-events: none; opacity: 0;
+  font: 12px/1.35 var(--mono); color: var(--text); background: #0b1a11; border: 1px solid var(--green-dim); border-radius: 8px; padding: 7px 10px; transition: opacity .2s, translate .2s; }
+.ct.tip .ct-tip { opacity: 1; translate: var(--tx) 0; }
+.ct.copied .ct-tip { color: var(--green); border-color: var(--green); }
+@media (hover: hover) { .ct-copy:hover .ct-tip, .ct-static:hover .ct-tip { opacity: 1; translate: var(--tx) 0; } }
+@media (max-width: 420px) {   /* narrow phones: bubbles hug the outer edge of their logo so they never cross the screen edge */
+  .contact > :nth-child(odd) .ct-tip { --tx: 0; left: 0; }
+  .contact > :nth-child(even) .ct-tip { --tx: 0; left: auto; right: 0; } }
+@media (max-width: 760px) { .contact { grid-template-columns: repeat(2, 104px); gap: 30px 64px; padding-block: 8px 20px; } .ct { width: 104px; height: 104px; } .ct-ico { width: 80px; height: 80px; } }
 
 footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 0 16px 76px; }
 .replay { display: block; margin: 16px auto 0; padding: 9px 14px; font: 12px/1 var(--mono); letter-spacing: .06em; color: var(--green); background: none; border: 1px dashed var(--green-dim); border-radius: 0; cursor: pointer; transition: border-color .2s; }
@@ -276,9 +287,9 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 @media (prefers-reduced-motion: reduce) { .replay { display: none; } }
 
 /* interactive surfaces */
-.card, .job, .item, .row, .certs a, .school { position: relative; }
-.job .when, .row .k { transition: color .25s; }
-.job:hover .when, .row:hover .k { color: var(--green); }
+.card, .job, .certs a, .school { position: relative; }
+.job .when { transition: color .25s; }
+.job:hover .when { color: var(--green); }
 .job:hover h3 { color: #fff; }
 .job li, .card li { transition: translate .25s; }
 .job:hover li, .card:hover li { translate: 3px 0; }
@@ -287,12 +298,14 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 .card { transform-style: preserve-3d; will-change: transform; }
 
 /* contact: "Let's work together" next to the contact list */
-.contact-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 56px; align-items: center; }
-@media (max-width: 760px) { .contact-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; } .lwt-box { order: 2; } }   /* phones: the page ends on it */
-.lwt-box { padding-block: 36px; }
+#contact { text-align: center; }   /* the last page is centred */
+#contact h2 { justify-content: center; }
+.contact-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; }   /* "Let's work together", its line, then the logos under them */
+@media (max-width: 760px) { .contact-grid { gap: 22px; } #contact { padding-block: 36px; } }   /* phones: the last page fits one screen */
+.lwt-box { padding-block: 0; }
 .lwt { font: 700 clamp(44px, 7vw, 74px)/.95 var(--head); text-transform: uppercase; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
 .lwt .dot { color: var(--green); }
-.lwt-sub { color: var(--muted); margin: 18px 0 24px; max-width: 36ch; }
+.lwt-sub { color: var(--muted); margin: 18px auto 0; max-width: 36ch; }
 
 /* build show: pretend AI agents build the page as you scroll (see the script for how it works) */
 html.agents-intro body::after { content: ""; position: fixed; inset: 0; background: var(--bg); z-index: 29; }
@@ -568,14 +581,13 @@ const DATA = {
   // the big "Let's work together" block in the contact section
   cta: {
     title: "Let's work together",
-    text: "Have a role, a project or an idea? I'd love to hear about it.",
-    button: "Say hello"
+    text: "Have a role, a project or an idea? I'd love to hear about it."
   },
   contact: [
-    { k: "Email", v: "basharkyousef2@gmail.com", copy: true },
-    { k: "LinkedIn", v: "linkedin.com/in/bashar-khaled-yousef", href: "https://www.linkedin.com/in/bashar-khaled-yousef/" },
-    { k: "GitHub", v: "github.com/0basharyousef0", href: "https://github.com/0basharyousef0" },
-    { k: "Location", v: "Currently in London. Flexible" }
+    { k: "Email", v: "basharkyousef2@gmail.com", copy: true, icon: "gmail" },
+    { k: "LinkedIn", v: "linkedin.com/in/bashar-khaled-yousef", href: "https://www.linkedin.com/in/bashar-khaled-yousef/", icon: "linkedin" },
+    { k: "GitHub", v: "github.com/0basharyousef0", href: "https://github.com/0basharyousef0", icon: "github" },
+    { k: "Location", v: "Currently in London, ON. Flexible", icon: "pin" }
   ]
 };
 
@@ -634,29 +646,35 @@ document.querySelectorAll(".acc-tab").forEach(t => t.addEventListener("click", (
   if (opening) { item.classList.add("open"); t.setAttribute("aria-expanded", "true"); item.querySelector(".acc-panel").setAttribute("aria-hidden", "false"); }
 }));
 
-$("#contactList").innerHTML = DATA.contact.map(c => `
-  <div class="row"><span class="k">${esc(c.k)}</span>
-  <span class="v">${c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.v)}</a>` : esc(c.v)}</span>
-  ${c.copy ? `<button class="copy" type="button" data-v="${esc(c.v)}">copy</button>` : "<span></span>"}</div>`).join("");
-const email = (DATA.contact.find(c => /mail/i.test(c.k)) || {}).v;
-$("#lwtBox").innerHTML = `<h3 class="lwt" id="lwt">${esc(DATA.cta.title)}<span class="dot">.</span></h3>
-  <p class="lwt-sub">${esc(DATA.cta.text)}</p>
-  ${email ? `<a class="btn lwt-btn" href="mailto:${esc(email)}">${esc(DATA.cta.button)} →</a>` : ""}`;
-// "Say hello": copies the email and opens the mail app. Inside a preview frame or some in-app browsers a
-// mailto link swaps the page for a blank screen, so there it only copies
-$("#lwtBox .lwt-btn")?.addEventListener("click", e => {
-  e.preventDefault();
-  const btn = e.currentTarget;
-  navigator.clipboard?.writeText(email).catch(() => {});
-  btn.textContent = "Email copied ✓";
-  setTimeout(() => { btn.textContent = `${DATA.cta.button} →`; }, 2200);
-  if (window.top === window.self) location.href = btn.href;
-});
-document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () => {
-  navigator.clipboard?.writeText(b.dataset.v).then(() => { b.textContent = "copied"; setTimeout(() => b.textContent = "copy", 1400); }, () => {
-    const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); getSelection().removeAllRanges(); getSelection().addRange(r);
-  });
+// contact tiles: logos drawn as inline SVG (crisp at any size, nothing extra to upload)
+const ICONS = {
+  gmail: '<svg viewBox="52 42 88 66"><path fill="#4285f4" d="M58 108h14V74L52 59v43c0 3.32 2.69 6 6 6"/><path fill="#34a853" d="M120 108h14c3.32 0 6-2.690 6-6V59l-20 15"/><path fill="#fbbc04" d="M120 48v26l20-15v-8c0-7.42-8.47-11.65-14.4-7.2"/><path fill="#ea4335" d="M72 74V48l24 18 24-18v26L96 92"/><path fill="#c5221f" d="M52 51v8l20 15V48l-5.6-4.2c-5.94-4.45-14.4-.22-14.4 7.2"/></svg>',
+  linkedin: '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#0a66c2"/><circle cx="5.337" cy="5.37" r="2.063" fill="#fff"/><path fill="#fff" d="M3.555 9h3.564v11.452H3.555zM20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286z"/></svg>',
+  github: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>',
+  pin: '<svg viewBox="0 0 24 24"><path fill="#ea4335" d="M12 1.5c-4.1 0-7.5 3.3-7.5 7.4 0 5.6 7.5 13.6 7.5 13.6s7.5-8 7.5-13.6c0-4.1-3.4-7.4-7.5-7.4z"/><circle cx="12" cy="8.9" r="2.8" fill="#a50e0e"/></svg>'
+};
+$("#contactList").innerHTML = DATA.contact.map(c => {
+  const ico = `<span class="ct-ico" aria-hidden="true">${ICONS[c.icon] || ""}</span>`;
+  if (c.copy) return `<button class="ct ct-copy" type="button" data-v="${esc(c.v)}" aria-label="Copy email address ${esc(c.v)}">${ico}<span class="ct-tip" aria-hidden="true">Copy email</span></button>`;
+  if (c.href) return `<a class="ct" href="${esc(c.href)}" target="_blank" rel="noopener" aria-label="${esc(c.k)}: ${esc(c.v)}" title="${esc(c.k)}">${ico}</a>`;
+  return `<button class="ct ct-static" type="button" aria-label="${esc(c.k)}: ${esc(c.v)}">${ico}<span class="ct-tip" aria-hidden="true">${esc(c.v)}</span></button>`;
+}).join("");
+$("#lwtBox").innerHTML = `<h3 class="lwt" id="lwt">${esc(DATA.cta.title).replace(/\s+(\S+)$/, "<br>$1")}<span class="dot">.</span></h3>
+  <p class="lwt-sub">${esc(DATA.cta.text)}</p>`;
+// email tile: copy to the clipboard. Falls back to the older copy command where the clipboard API is
+// blocked (some in-app browsers and preview frames), then shows "Copied ✓" for a moment
+const legacyCopy = t => { const ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", "");
+  ta.style.cssText = "position:fixed;top:0;left:0;opacity:0"; document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand("copy"); } catch (e) {} ta.remove(); return ok; };
+const flashTip = (b, ms) => { b.classList.add("tip"); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove("tip", "copied"), ms); };
+document.querySelectorAll(".ct-copy").forEach(b => b.addEventListener("click", () => {
+  const v = b.dataset.v, tip = b.querySelector(".ct-tip");
+  const done = () => { b.classList.add("copied"); tip.textContent = "Copied ✓"; flashTip(b, 1800);
+    setTimeout(() => { if (!b.classList.contains("copied")) tip.textContent = "Copy email"; }, 2100); };
+  const api = navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(v) : Promise.reject();
+  api.then(done, () => { if (legacyCopy(v)) done(); });
 }));
+document.querySelectorAll(".ct-static").forEach(b => b.addEventListener("click", () => flashTip(b, 2600)));   // phones: tap the pin
 
 /* name → binary
    - devices with a mouse: each name keeps flipping into random 1s and 0s while the cursor is on it,
@@ -1159,8 +1177,8 @@ const decode = el => {
     [".job", "box"], [".job .when", "type"], [".job h3", "type"], [".job ul", "type"],
     [".acc-item", "box"], [".acc-title", "type"], [".acc-tab .org", "type"], [".acc-tab .when", "type"],
     [".chip", "type"], ["#mindmap .mm-node", "type"],
-    [".lwt", "type"], [".lwt-sub", "type"], [".lwt-btn", "type"],
-    [".row", "box"], [".row .k", "type"], [".row .v", "type"], [".copy", "type"],
+    [".lwt", "type"], [".lwt-sub", "type"],
+    [".ct-ico", "img"],
     ["main img", "img"], ["main video", "img"]
   ];
   const T = new Map();
