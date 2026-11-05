@@ -28,7 +28,7 @@
 [hidden] { display: none !important; }
 /* reel-style scrolling: every section fills the screen and the page snaps from one to the next, one per
    swipe or wheel flick. Sections taller than the screen scroll normally inside, then snap on to the next */
-html { scroll-behavior: smooth; scroll-padding-top: var(--top-h); scroll-snap-type: y mandatory; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--top-h) + env(safe-area-inset-top, 0px)); scroll-snap-type: y mandatory; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--body); }
 ::selection { background: var(--green); color: var(--bg); }
 a { color: var(--green); text-decoration: none; }
@@ -52,9 +52,12 @@ a:hover { text-decoration: underline; }
 #dots { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 main, footer { position: relative; z-index: 1; }
 main { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 0 64px; }
-section { min-height: calc(100vh - var(--top-h)); min-height: calc(100svh - var(--top-h)); padding-block: 64px;
+section { position: relative; min-height: calc(100vh - var(--top-h)); min-height: calc(100svh - var(--top-h)); padding-block: 64px;
   display: flex; flex-direction: column; justify-content: center; scroll-snap-align: start; scroll-snap-stop: always; }
 footer { scroll-snap-align: end; }
+/* phones: breathing room under every section so its last lines clear the status pill and the home bar */
+@media (max-width: 760px) { main > section:not(.hero) { padding-block: 40px calc(76px + env(safe-area-inset-bottom, 0px)); } }
+.snap-mark { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; }   /* extra stopping points, see the script */
 
 /* hero */
 .hero { min-height: calc(100svh - var(--top-h)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-block: 4px 70px; position: relative; }
@@ -207,7 +210,7 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 /* leadership + volunteering */
 .sub { font-family: var(--mono); font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin: 0 0 12px; }
 /* stacked tabs (an accordion): logo, title + club, date; one opens at a time and its description slides out */
-#leadership { padding-block: 32px; }   /* room for an open description without spilling past the screen */
+@media (min-width: 761px) { #leadership { padding-block: 32px; } }   /* laptop: room for an open description without spilling past the screen */
 .acc { border-top: 1px solid var(--line); }
 .acc-gap { margin-top: 30px; }
 .acc-item { border-bottom: 1px solid var(--line); }
@@ -257,7 +260,6 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .mindmap.lit .mm-lines path.br { stroke: var(--green); opacity: .95; stroke-width: 1.8; }
 .mindmap.lit .mm-lines path.ln { opacity: .6; }
 .mindmap.lit .mm-node:not(.mm-core) { border-color: var(--green-dim); }
-@media (max-width: 720px) { #interests { padding-block: 36px; } }
 @media (max-width: 560px) { .mm-node { width: 96px; height: 96px; padding: 6px; font-size: 11px; } .mm-core { width: 106px; height: 106px; font-size: 15px; } }
 
 
@@ -301,7 +303,7 @@ footer { text-align: center; color: var(--muted); font-family: var(--mono); font
 #contact { text-align: center; }   /* the last page is centred */
 #contact h2 { justify-content: center; }
 .contact-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; }   /* "Let's work together", its line, then the logos under them */
-@media (max-width: 760px) { .contact-grid { gap: 22px; } #contact { padding-block: 36px; } }   /* phones: the last page fits one screen */
+@media (max-width: 760px) { .contact-grid { gap: 22px; } }
 .lwt-box { padding-block: 0; }
 .lwt { font: 700 clamp(44px, 7vw, 74px)/.95 var(--head); text-transform: uppercase; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
 .lwt .dot { color: var(--green); }
@@ -364,15 +366,28 @@ html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue
 (() => { try {
   // a reload always starts the show from zero: drop any #section left over from clicking around
   // (a first visit through a #contact link still skips the intro)
-  let reload = false;
+  // jump (not glide) to the top: an explicit instant scroll, or switch smooth scrolling off for a moment on
+  // older browsers that don't know "instant"
+  window.__jumpTop = () => { const r = document.documentElement;
+    try { scrollTo({ top: 0, behavior: "instant" }); } catch (e) { r.style.scrollBehavior = "auto"; void getComputedStyle(r).scrollBehavior; scrollTo(0, 0); requestAnimationFrame(() => { r.style.scrollBehavior = ""; }); }
+    if (scrollY) { r.style.scrollBehavior = "auto"; void getComputedStyle(r).scrollBehavior; scrollTo(0, 0); requestAnimationFrame(() => { r.style.scrollBehavior = ""; }); } };
+  let reload = false, replay = false;
   try { reload = (performance.getEntriesByType("navigation")[0] || {}).type === "reload"; } catch (e) {}
+  try { replay = sessionStorage.getItem("bos-replay") === "1"; sessionStorage.removeItem("bos-replay"); } catch (e) {}
+  const fresh = reload || replay;
   // never restore the old scroll spot on reload, so the next reload opens at the top
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-  if (reload && location.hash) {
-    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
-    scrollTo(0, 0); addEventListener("load", () => scrollTo(0, 0), { once: true });
+  if (fresh) {
+    if (location.hash) try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    // phones (Safari especially) can put the old scroll spot back late, after the page loads: keep
+    // returning to the top for a moment, but stop the instant the person touches the screen
+    let touched = false;
+    ["touchstart", "wheel", "keydown", "pointerdown"].forEach(ev => addEventListener(ev, () => { touched = true; }, { once: true, passive: true }));
+    const top = () => { if (!touched && scrollY) window.__jumpTop(); };
+    top(); requestAnimationFrame(top);
+    addEventListener("load", () => { top(); [60, 250, 600, 1200, 2000].forEach(ms => setTimeout(top, ms)); }, { once: true });
   }
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches || (location.hash && !reload) || !("IntersectionObserver" in window)) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || (location.hash && !fresh) || !("IntersectionObserver" in window)) return;
   document.documentElement.classList.add("agents-intro");
   setTimeout(() => document.documentElement.classList.remove("agents-intro"), 6000);
 } catch (e) {} })();
@@ -858,6 +873,40 @@ const decode = el => {
   (function loop(tn) { if (seen && !document.hidden) place(tn); requestAnimationFrame(loop); })(performance.now());
 })();
 
+/* phones and tablets: extra stopping points inside long sections, so reel snapping can never hide
+   anything. Some phone browsers (iPhone Safari especially) only rest at a section's start, so a section
+   taller than the screen gets an invisible marker at its end and, if it is very long, one about every
+   85% of a screen in between: a swipe then steps through it a screenful at a time. Measured against the
+   small-screen height so Safari's toolbar sliding in and out can't move them mid-scroll */
+(() => {
+  const mq = matchMedia("(hover: none), (max-width: 760px)");
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none";
+  document.body.appendChild(probe);
+  const marks = []; let lastW = innerWidth, queued = false;
+  const place = () => {
+    queued = false;
+    marks.splice(0).forEach(m => m.remove());
+    if (!mq.matches) return;
+    const top = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0, port = probe.offsetHeight - top;
+    if (port < 200) return;
+    document.querySelectorAll("main > section").forEach(s => {
+      const h = s.offsetHeight, extra = h - port, pb = parseFloat(getComputedStyle(s).paddingBottom) || 0;
+      if (extra <= pb - 16) return;                                    // only bottom padding is off-screen
+      const add = (y, align) => { const m = document.createElement("i"); m.className = "snap-mark"; m.setAttribute("aria-hidden", "true");
+        m.style.top = y + "px"; m.style.scrollSnapAlign = align; m.style.scrollSnapStop = "always"; s.appendChild(m); marks.push(m); };   // a swipe can't skip past them
+      const step = Math.round(port * .85);
+      for (let y = step; y < extra - port * .3; y += step) add(y, "start");                // none right before the end stop
+      add(h - 1, "end");
+    });
+  };
+  const soon = () => { if (!queued) { queued = true; requestAnimationFrame(place); } };
+  place();
+  addEventListener("resize", () => { if (innerWidth !== lastW) { lastW = innerWidth; soon(); } });
+  if (window.ResizeObserver) new ResizeObserver(soon).observe(document.querySelector("main"));
+  if (mq.addEventListener) mq.addEventListener("change", soon);
+})();
+
 /* background: small dots drifting slowly across a fixed layer that never scrolls */
 (() => {
   const cv = $("#dots"), ctx = cv.getContext("2d");
@@ -1088,15 +1137,19 @@ const decode = el => {
   b.addEventListener("click", () => {
     if (b.disabled) return;
     b.disabled = true; b.textContent = "↻ restarting…";
+    try { sessionStorage.setItem("bos-replay", "1"); } catch (e) {}   // the reloaded page then holds the top
+    const root = document.documentElement;
+    root.style.scrollSnapType = "none";                                 // nothing may stop the glide on its way up
     let went = false;
     const go = () => {
       if (went) return; went = true;
+      if (window.__jumpTop) window.__jumpTop(); else scrollTo(0, 0);
       try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
       location.reload();
     };
-    scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     const t0 = performance.now();
-    (function wait() { scrollY < 2 || performance.now() - t0 > 900 ? setTimeout(go, 150) : requestAnimationFrame(wait); })();
+    (function wait() { scrollY < 2 || performance.now() - t0 > 1600 ? setTimeout(go, 120) : requestAnimationFrame(wait); })();
   });
 })();
 /* ---------- build show: a (pretend) swarm of AI agents builds the page as you scroll ----------
