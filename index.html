@@ -94,7 +94,10 @@ footer { scroll-snap-align: end; }
 .about-video::before { content: ""; position: absolute; inset: 12%; z-index: -1; border-radius: 50%; background: radial-gradient(circle, #3dfc8426, transparent 70%); filter: blur(30px); }
 /* the clip sits in a soft blob that slowly changes shape, with a thin outline in a different blob shape
    on top that drifts out of step with it (inspired by "organic shape + offset line" layouts) */
-.about-loop { display: block; width: 100%; height: 100%; object-fit: cover;
+/* no Safari play button or tap-to-pause: it is a silent background loop */
+.about-loop::-webkit-media-controls, .about-loop::-webkit-media-controls-panel, .about-loop::-webkit-media-controls-start-playback-button,
+.about-loop::-webkit-media-controls-overlay-play-button { display: none !important; -webkit-appearance: none; }
+.about-loop { pointer-events: none; display: block; width: 100%; height: 100%; object-fit: cover;
   border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; animation: blobFill 14s ease-in-out infinite alternate; }
 .blob-line { position: absolute; inset: 1%; z-index: 1; pointer-events: none; translate: 4% -3%;
   border: 2px solid #3dfc84d9; border-radius: 62% 38% 35% 65% / 52% 64% 36% 48%;
@@ -216,7 +219,8 @@ h2 .cmd { font: 400 14px var(--mono); color: var(--green-dim); font-variant-nume
 .acc-item { border-bottom: 1px solid var(--line); }
 .acc-h { margin: 0; font: inherit; }
 .acc-tab { width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 14px; align-items: center; gap: 4px 16px; padding: 14px 10px; margin: 0;
-  background: none; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background .2s; }
+  background: none; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background .2s;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .acc-tab:hover { background: var(--surface); }
 .acc-logo { width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); transition: box-shadow .25s; }
 .acc-tab:hover .acc-logo, .acc-item.open .acc-logo { box-shadow: 0 0 0 1px var(--green-dim), 0 0 14px #3dfc8433; }
@@ -368,9 +372,10 @@ html.agents-intro .portrait3, html.agents-intro .hero h1, html.agents-intro .cue
   // (a first visit through a #contact link still skips the intro)
   // jump (not glide) to the top: an explicit instant scroll, or switch smooth scrolling off for a moment on
   // older browsers that don't know "instant"
-  window.__jumpTop = () => { const r = document.documentElement;
-    try { scrollTo({ top: 0, behavior: "instant" }); } catch (e) { r.style.scrollBehavior = "auto"; void getComputedStyle(r).scrollBehavior; scrollTo(0, 0); requestAnimationFrame(() => { r.style.scrollBehavior = ""; }); }
-    if (scrollY) { r.style.scrollBehavior = "auto"; void getComputedStyle(r).scrollBehavior; scrollTo(0, 0); requestAnimationFrame(() => { r.style.scrollBehavior = ""; }); } };
+  window.__jumpTo = y => { const r = document.documentElement;
+    try { scrollTo({ top: y, behavior: "instant" }); } catch (e) {}
+    if (Math.abs(scrollY - y) > 1) { r.style.scrollBehavior = "auto"; void getComputedStyle(r).scrollBehavior; scrollTo(0, y); requestAnimationFrame(() => { r.style.scrollBehavior = ""; }); } };
+  window.__jumpTop = () => window.__jumpTo(0);
   let reload = false, replay = false;
   try { reload = (performance.getEntriesByType("navigation")[0] || {}).type === "reload"; } catch (e) {}
   try { replay = sessionStorage.getItem("bos-replay") === "1"; sessionStorage.removeItem("bos-replay"); } catch (e) {}
@@ -611,6 +616,19 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 if (reduced) { const v = document.querySelector(".about-loop"); if (v) { v.removeAttribute("autoplay"); v.pause(); } }
+/* the About clip must play by itself. iPhones only autoplay silent inline video, and can skip it (Low Power
+   Mode, or because the clip is still invisible until the agents paste it in), so start it ourselves whenever
+   it comes into view or gets built, and if the phone still refuses, on the visitor's next tap */
+(() => {
+  const v = document.querySelector(".about-loop"); if (!v || reduced) return;
+  v.muted = true; v.defaultMuted = true; v.playsInline = true; v.loop = true; v.setAttribute("webkit-playsinline", "");
+  const kick = () => { if (v.paused) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } };
+  if ("IntersectionObserver" in window) new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) kick(); }), { threshold: .15 }).observe(v);
+  new MutationObserver(kick).observe(v, { attributes: true, attributeFilter: ["class"] });
+  ["touchend", "click", "keydown"].forEach(ev => addEventListener(ev, kick, { passive: true }));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) kick(); });
+  v.addEventListener("canplay", kick); v.addEventListener("pause", () => setTimeout(kick, 300));
+})();
 const sample = x => x.sample ? '<span class="sample">SAMPLE</span>' : "";
 
 const ed = DATA.education;
@@ -653,12 +671,31 @@ const tabs = list => list.map(i => { const id = "role" + accN++; return `
   </div>`; }).join("");
 $("#leadList").innerHTML = tabs(DATA.leadership);
 $("#volList").innerHTML = tabs(DATA.volunteering);
-// only one open at a time across both groups; clicking the open one closes it
+// only one open at a time across both groups; clicking the open one closes it.
+// On phones the section changes height while a tab slides open, which used to make reel snapping jump
+// around: snapping now pauses during the animation, the tapped tab stays put under the finger (never
+// scrolling above the section's start), and snapping resumes exactly where the page is
+let accBusy = 0;
 document.querySelectorAll(".acc-tab").forEach(t => t.addEventListener("click", () => {
+  if (performance.now() - accBusy < 420) return;                       // a second tap mid-animation: ignore
+  accBusy = performance.now();
+  const sm = window.__snapMarks, touch = !!(sm && sm.active()), sec = t.closest("section"), before = t.getBoundingClientRect().top;
+  if (touch) sm.suspend();
   const item = t.closest(".acc-item"), opening = !item.classList.contains("open");
   document.querySelectorAll(".acc-item.open").forEach(x => {
     x.classList.remove("open"); x.querySelector(".acc-tab").setAttribute("aria-expanded", "false"); x.querySelector(".acc-panel").setAttribute("aria-hidden", "true"); });
   if (opening) { item.classList.add("open"); t.setAttribute("aria-expanded", "true"); item.querySelector(".acc-panel").setAttribute("aria-hidden", "false"); }
+  if (!touch) return;
+  const t0 = performance.now(), padTop = () => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  const startY = () => scrollY + sec.getBoundingClientRect().top - padTop();
+  (function keep() {
+    const want = Math.max(startY(), scrollY + t.getBoundingClientRect().top - before);
+    if (Math.abs(want - scrollY) > .5) window.__jumpTo(want);
+    if (performance.now() - t0 < 460) return requestAnimationFrame(keep);
+    const maxY = Math.max(startY(), scrollY + sec.getBoundingClientRect().bottom - innerHeight);   // stay inside this section
+    if (scrollY > maxY + .5) window.__jumpTo(maxY);
+    sm.resume();
+  })();
 }));
 
 // contact tiles: logos drawn as inline SVG (crisp at any size, nothing extra to upload)
@@ -879,32 +916,43 @@ const decode = el => {
    85% of a screen in between: a swipe then steps through it a screenful at a time. Measured against the
    small-screen height so Safari's toolbar sliding in and out can't move them mid-scroll */
 (() => {
-  const mq = matchMedia("(hover: none), (max-width: 760px)");
+  const mq = matchMedia("(hover: none), (max-width: 760px)"), root = document.documentElement;
   const probe = document.createElement("div");
   probe.style.cssText = "position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none";
   document.body.appendChild(probe);
-  const marks = []; let lastW = innerWidth, queued = false;
-  const place = () => {
-    queued = false;
+  const marks = []; let hold = null, lastW = innerWidth, timer = 0, paused = false;
+  const padTop = () => parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+  const mark = (s, y, align, stop) => { const m = document.createElement("i"); m.className = "snap-mark"; m.setAttribute("aria-hidden", "true");
+    m.style.top = y + "px"; m.style.scrollSnapAlign = align; if (stop) m.style.scrollSnapStop = "always"; s.appendChild(m); return m; };
+  const build = () => {
     marks.splice(0).forEach(m => m.remove());
+    if (hold) { hold.remove(); hold = null; }
     if (!mq.matches) return;
-    const top = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0, port = probe.offsetHeight - top;
+    const port = probe.offsetHeight - padTop();
     if (port < 200) return;
     document.querySelectorAll("main > section").forEach(s => {
       const h = s.offsetHeight, extra = h - port, pb = parseFloat(getComputedStyle(s).paddingBottom) || 0;
       if (extra <= pb - 16) return;                                    // only bottom padding is off-screen
-      const add = (y, align) => { const m = document.createElement("i"); m.className = "snap-mark"; m.setAttribute("aria-hidden", "true");
-        m.style.top = y + "px"; m.style.scrollSnapAlign = align; m.style.scrollSnapStop = "always"; s.appendChild(m); marks.push(m); };   // a swipe can't skip past them
       const step = Math.round(port * .85);
-      for (let y = step; y < extra - port * .3; y += step) add(y, "start");                // none right before the end stop
-      add(h - 1, "end");
+      for (let y = step; y < extra - port * .3; y += step) marks.push(mark(s, y, "start", true));   // a swipe can't skip past them
+      marks.push(mark(s, h - 1, "end", true));
     });
   };
-  const soon = () => { if (!queued) { queued = true; requestAnimationFrame(place); } };
-  place();
+  // a resting point exactly where the page is now, so switching snapping back on can never move it
+  const holdHere = () => {
+    if (!mq.matches) return;
+    const t = padTop(), s = [...document.querySelectorAll("main > section")].find(x => { const r = x.getBoundingClientRect(); return r.top <= t + 2 && r.bottom > t + 2; });
+    if (s) hold = mark(s, Math.round(t - s.getBoundingClientRect().top), "start", false);
+  };
+  const suspend = () => { paused = true; clearTimeout(timer); root.style.scrollSnapType = "none"; };
+  const resume = () => { build(); holdHere(); paused = false; root.style.scrollSnapType = ""; };
+  const refresh = () => { if (paused) return; if (!mq.matches) { build(); return; } suspend(); resume(); };
+  const soon = () => { clearTimeout(timer); timer = setTimeout(refresh, 250); };      // only once the layout has settled
+  build();
   addEventListener("resize", () => { if (innerWidth !== lastW) { lastW = innerWidth; soon(); } });
   if (window.ResizeObserver) new ResizeObserver(soon).observe(document.querySelector("main"));
   if (mq.addEventListener) mq.addEventListener("change", soon);
+  window.__snapMarks = { suspend, resume, active: () => mq.matches };
 })();
 
 /* background: small dots drifting slowly across a fixed layer that never scrolls */
